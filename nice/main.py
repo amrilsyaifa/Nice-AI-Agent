@@ -1,6 +1,7 @@
 import typer
 from nice.cli.ask import ask_command
 from nice.cli.version import version_command
+from nice.cli.config_cmd import config_app
 
 app = typer.Typer(
     name="nice",
@@ -10,6 +11,7 @@ app = typer.Typer(
 
 app.command("ask")(ask_command)
 app.command("version")(version_command)
+app.add_typer(config_app, name="config")
 
 if __name__ == "__main__":
     app()

@@ -9,6 +9,10 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
+    def chat_sync(self, messages: list[dict]) -> str:
+        pass
+
+    @abstractmethod
     def name(self) -> str:
         """Nama provider ini."""
         pass

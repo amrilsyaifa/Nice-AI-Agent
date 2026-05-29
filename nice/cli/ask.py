@@ -1,10 +1,13 @@
 import typer
-import asyncio
-from nice.providers.registry import get_default_provider
+from nice.providers.registry import get_active_provider
+from nice.config.settings import load_config
 
 def ask_command(prompt: str):
     """Tanya sesuatu ke AI."""
-    typer.echo("Thinking...")
+    config = load_config()
+    typer.echo(f"[{config.provider} / {config.model}]")
+    typer.echo("Thinking...\n")
+
     messages = [
         {
             "role": "system",
@@ -16,6 +19,6 @@ def ask_command(prompt: str):
         }
     ]
 
-    provider = get_default_provider()
-    hasil = asyncio.run(provider.chat(messages))
-    typer.echo(f"\nAI: {hasil}")
+    provider = get_active_provider()
+    hasil = provider.chat_sync(messages)
+    typer.echo(f"AI: {hasil}")

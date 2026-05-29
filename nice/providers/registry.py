@@ -12,6 +12,8 @@ def get_provider(name: str) -> BaseProvider:
         raise ValueError(f"Provider '{name}' tidak dikenal. Tersedia: {available}")
     return PROVIDERS[name]
 
-def get_default_provider() -> BaseProvider:
-    """Ambil provider default (OpenAI)."""
-    return get_provider("openai")
+def get_active_provider() -> BaseProvider:
+    """Ambil provider yang aktif berdasarkan config."""
+    from nice.config.settings import load_config
+    config = load_config()
+    return get_provider(config.provider)
