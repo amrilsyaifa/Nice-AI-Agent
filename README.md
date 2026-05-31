@@ -13,10 +13,18 @@ Your autonomous CLI AI engineer. Ask questions, run interactive chats, execute c
 ## Requirements
 
 - Python >= 3.13
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- [uv](https://github.com/astral-sh/uv)
 - An API key for [OpenRouter](https://openrouter.ai) (or any OpenAI-compatible endpoint)
 
 ## Installation
+
+Install uv if you haven't:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Clone and sync dependencies:
 
 ```bash
 git clone <repo-url>
@@ -24,10 +32,30 @@ cd nice
 uv sync
 ```
 
-Or with pip:
+Run without installing globally:
 
 ```bash
-pip install -e .
+uv run nice ask "Halo!"
+```
+
+Or install the `nice` command into the project's virtualenv and activate it:
+
+```bash
+uv sync
+source .venv/bin/activate
+nice ask "Halo!"
+```
+
+Install globally (available everywhere without activating venv):
+
+```bash
+uv tool install .
+```
+
+Uninstall:
+
+```bash
+uv tool uninstall nice
 ```
 
 ## Configuration
