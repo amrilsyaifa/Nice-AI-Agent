@@ -5,14 +5,14 @@ from nice.providers.registry import get_active_provider
 from nice.tools.registry import TOOL_DEFINITIONS
 from nice.cli._spinner import run_with_spinner, console
 
-SYSTEM_PROMPT = """Kamu adalah AI engineer bernama Nice.
-Kamu bisa membaca, menulis, dan menjalankan perintah di komputer user.
-Gunakan tools yang tersedia untuk menyelesaikan task.
-Ingat konteks task sebelumnya dalam sesi ini.
-Selalu jawab dalam Bahasa Indonesia."""
+SYSTEM_PROMPT = """You are an AI engineer named Nice.
+You can read, write, and run commands on the user's computer.
+Use the available tools to complete the task.
+Remember the context of previous tasks in this session.
+Reply in the same language as the user's input."""
 
-def code_command(task: Optional[str] = typer.Argument(None, help="Task coding. Kosongkan untuk mode interaktif.")):
-    """Eksekusi task coding dengan tools. Tanpa argumen = mode interaktif."""
+def code_command(task: Optional[str] = typer.Argument(None, help="Coding task. Leave empty for interactive mode.")):
+    """Execute a coding task with tools. No argument = interactive mode."""
     config = load_config()
     provider = get_active_provider()
 
@@ -29,7 +29,7 @@ def code_command(task: Optional[str] = typer.Argument(None, help="Task coding. K
         result, err = run_with_spinner(lambda: provider.chat_sync(messages, tools=TOOL_DEFINITIONS))
 
         if isinstance(err, KeyboardInterrupt):
-            console.print("[yellow]Dibatalkan.[/yellow]")
+            console.print("[yellow]Cancelled.[/yellow]")
             return
         if err:
             console.print(f"[red]Error:[/red] {err}")
@@ -40,7 +40,7 @@ def code_command(task: Optional[str] = typer.Argument(None, help="Task coding. K
 
     # Interactive mode
     console.print(f"[bold]Nice Code[/bold] [{config.provider} / {config.model}]")
-    console.print("Mode interaktif — ketik task, AI langsung eksekusi. 'exit' untuk keluar.")
+    console.print("Interactive mode — type a task, AI executes immediately. 'exit' to quit.")
     console.print("-" * 50)
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -49,11 +49,11 @@ def code_command(task: Optional[str] = typer.Argument(None, help="Task coding. K
         try:
             user_input = typer.prompt("You")
         except (KeyboardInterrupt, EOFError):
-            typer.echo("\nSampai jumpa!")
+            typer.echo("\nGoodbye!")
             break
 
         if user_input.lower() == "exit":
-            typer.echo("Sampai jumpa!")
+            typer.echo("Goodbye!")
             break
 
         if not user_input.strip():
@@ -61,12 +61,11 @@ def code_command(task: Optional[str] = typer.Argument(None, help="Task coding. K
 
         messages.append({"role": "user", "content": user_input})
 
-        # Snapshot messages untuk lambda (hindari closure issue)
         current_messages = list(messages)
         result, err = run_with_spinner(lambda: provider.chat_sync(current_messages, tools=TOOL_DEFINITIONS))
 
         if isinstance(err, KeyboardInterrupt):
-            console.print("\n[yellow]Dibatalkan.[/yellow]")
+            console.print("\n[yellow]Cancelled.[/yellow]")
             messages.pop()
             continue
 

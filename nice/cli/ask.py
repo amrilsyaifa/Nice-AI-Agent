@@ -3,7 +3,7 @@ from nice.providers.registry import get_active_provider
 from nice.config.settings import load_config
 
 def ask_command(prompt: str):
-    """Tanya sesuatu ke AI."""
+    """Ask the AI a question."""
     config = load_config()
     typer.echo(f"[{config.provider} / {config.model}]")
     typer.echo("Thinking...\n")
@@ -11,7 +11,7 @@ def ask_command(prompt: str):
     messages = [
         {
             "role": "system",
-            "content": "Kamu adalah AI assistant. Jawab selalu dalam Bahasa Indonesia."
+            "content": "You are a helpful AI assistant. Reply in the same language as the user's input."
         },
         {
             "role": "user",
@@ -20,5 +20,5 @@ def ask_command(prompt: str):
     ]
 
     provider = get_active_provider()
-    hasil = provider.chat_sync(messages)
-    typer.echo(f"AI: {hasil}")
+    result = provider.chat_sync(messages)
+    typer.echo(f"AI: {result}")

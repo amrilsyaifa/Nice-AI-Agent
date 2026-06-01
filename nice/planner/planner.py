@@ -2,35 +2,33 @@ import json
 from nice.providers.registry import get_active_provider
 from nice.planner.plan import ExecutionPlan
 
+PLANNER_PROMPT = """You are an AI engineer that creates execution plans.
 
-PLANNER_PROMPT = """Kamu adalah AI engineer yang membuat execution plan.
+Your task: break down a goal into concrete, actionable steps.
 
-Tugasmu: breakdown goal menjadi langkah-langkah yang konkret dan actionable.
-
-PENTING — response kamu harus JSON dengan format ini PERSIS:
+IMPORTANT — your response must be EXACTLY this JSON format:
 {
   "steps": [
-    "langkah pertama yang konkret",
-    "langkah kedua yang konkret",
-    "langkah ketiga yang konkret"
+    "first concrete step",
+    "second concrete step",
+    "third concrete step"
   ]
 }
 
 Rules:
-- Maksimal 6 langkah
-- Setiap langkah harus spesifik dan actionable
-- Gunakan bahasa Indonesia
-- Jangan tambahkan penjelasan diluar JSON
-- Response HANYA JSON, tidak ada teks lain"""
+- Maximum 6 steps
+- Each step must be specific and actionable
+- No explanations outside the JSON
+- Response ONLY JSON, no other text"""
 
 def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = None) -> ExecutionPlan:
-    """Minta LLM untuk breakdown goal jadi langkah-langkah."""
+    """Ask the LLM to break down a goal into steps."""
     provider = get_active_provider()
 
-    content = f"Buat plan untuk: {goal}"
+    content = f"Create a plan for: {goal}"
     if feedback and previous_steps:
         steps_str = "\n".join(f"{i+1}. {s}" for i, s in enumerate(previous_steps))
-        content += f"\n\nPlan sebelumnya:\n{steps_str}\n\nMasukan dari user: {feedback}\n\nBuat plan yang sudah direvisi."
+        content += f"\n\nPrevious plan:\n{steps_str}\n\nUser feedback: {feedback}\n\nCreate a revised plan."
 
     messages = [
         {"role": "system", "content": PLANNER_PROMPT},
@@ -39,9 +37,7 @@ def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = Non
 
     response = provider.chat_sync(messages)
 
-    # Parse JSON dari response
     try:
-        # Bersihkan response kalau ada markdown code block
         clean = response.strip()
         if "```" in clean:
             clean = clean.split("```")[1]
@@ -51,18 +47,15 @@ def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = Non
         data = json.loads(clean.strip())
         steps = data.get("steps", [])
     except json.JSONDecodeError:
-        # Fallback kalau LLM tidak return JSON yang valid
-        print(f"⚠️  Warning: response bukan JSON valid, parsing manual...")
+        print("Warning: response was not valid JSON, parsing manually...")
         steps = [
             line.strip().lstrip("0123456789.-) ")
             for line in response.split("\n")
             if line.strip() and len(line.strip()) > 5
-        ][:6]  # Ambil maksimal 6 langkah
+        ][:6]
 
-    # Buat ExecutionPlan
     plan = ExecutionPlan(goal=goal)
     for step in steps:
         if step:
             plan.add_step(step)
     return plan
-   

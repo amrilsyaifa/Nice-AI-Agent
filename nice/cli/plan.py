@@ -7,10 +7,10 @@ from nice.planner.executor import execute_plan
 from nice.cli._spinner import run_with_spinner, console
 
 def plan_command(
-    goal: Optional[str] = typer.Argument(None, help="Goal yang ingin dicapai"),
-    execute: bool = typer.Option(False, "--execute", "-e", help="Langsung eksekusi tanpa konfirmasi"),
+    goal: Optional[str] = typer.Argument(None, help="Goal to achieve"),
+    execute: bool = typer.Option(False, "--execute", "-e", help="Execute immediately without confirmation"),
 ):
-    """Buat execution plan dengan feedback loop, lalu eksekusi."""
+    """Create an execution plan with a feedback loop, then execute it."""
 
     if not goal:
         goal = typer.prompt("Goal")
@@ -21,7 +21,6 @@ def plan_command(
     while True:
         typer.echo(f"\nGoal: {goal}")
 
-        # Buat plan dengan spinner
         current_goal = goal
         current_feedback = feedback
         current_prev = previous_steps
@@ -31,7 +30,7 @@ def plan_command(
         )
 
         if isinstance(err, KeyboardInterrupt):
-            console.print("[yellow]Dibatalkan.[/yellow]")
+            console.print("[yellow]Cancelled.[/yellow]")
             return
         if err:
             console.print(f"[red]Error:[/red] {err}")
@@ -40,30 +39,29 @@ def plan_command(
         plan.display()
 
         if not plan.steps:
-            console.print("[red]Tidak bisa membuat plan. Coba lagi.[/red]")
+            console.print("[red]Could not create a plan. Please try again.[/red]")
             return
 
         if execute:
             break
 
-        # Feedback loop
-        typer.echo("  [a] Approve    [r] Revisi    [c] Cancel")
-        choice = typer.prompt("Pilihan").strip().lower()
+        typer.echo("  [a] Approve    [r] Revise    [c] Cancel")
+        choice = typer.prompt("Choice").strip().lower()
 
         if choice == "a":
             break
         elif choice == "r":
-            feedback = typer.prompt("Masukan")
+            feedback = typer.prompt("Feedback")
             previous_steps = [s.description for s in plan.steps]
             continue
         else:
-            typer.echo("Plan dibatalkan.")
+            typer.echo("Plan cancelled.")
             return
 
-    # Eksekusi plan
+    # Execute plan
     plan = execute_plan(plan)
 
-    # Restore terminal state jika subprocess merusaknya
+    # Restore terminal state in case a subprocess broke it
     if sys.platform != "win32":
         os.system("stty sane 2>/dev/null")
 
@@ -73,9 +71,9 @@ def plan_command(
 
     done = sum(1 for s in plan.steps if s.status.value == "done")
     total = len(plan.steps)
-    typer.echo(f"{done}/{total} steps berhasil.")
+    typer.echo(f"{done}/{total} steps completed.")
 
     if plan.is_complete():
-        typer.echo("Plan selesai!")
+        typer.echo("Plan complete!")
     else:
-        typer.echo("Plan belum selesai sepenuhnya.")
+        typer.echo("Plan did not complete fully.")

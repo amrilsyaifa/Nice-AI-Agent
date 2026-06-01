@@ -4,36 +4,36 @@ from nice.config.settings import load_config
 from nice.memory.history import ConversationHistory
 from nice.cli._spinner import run_with_spinner, console
 
-SYSTEM_PROMPT = "Kamu adalah AI assistant bernama Nice. Jawab selalu dalam Bahasa Indonesia. Kamu mengingat konteks percakapan sebelumnya."
+SYSTEM_PROMPT = "You are a helpful AI assistant named Nice. Reply in the same language as the user's input. You remember the context of previous messages."
 
 def chat_command():
-    """Chat interaktif dengan AI. Ketik 'exit' untuk keluar, 'clear' untuk hapus history."""
+    """Interactive chat with AI. Type 'exit' to quit, 'clear' to reset history."""
 
     config = load_config()
     provider = get_active_provider()
     history = ConversationHistory()
 
     typer.echo(f"Nice Chat [{config.provider} / {config.model}]")
-    typer.echo("Ketik 'exit' untuk keluar, 'clear' untuk hapus history.")
+    typer.echo("Type 'exit' to quit, 'clear' to reset history.")
     typer.echo("-" * 50)
 
     if not history.is_empty():
-        typer.echo(f"(melanjutkan {len(history.messages)} pesan sebelumnya)\n")
+        typer.echo(f"(continuing from {len(history.messages)} previous messages)\n")
 
     while True:
         try:
             user_input = typer.prompt("You")
         except (KeyboardInterrupt, EOFError):
-            typer.echo("\nSampai jumpa!")
+            typer.echo("\nGoodbye!")
             break
 
         if user_input.lower() == "exit":
-            typer.echo("Sampai jumpa!")
+            typer.echo("Goodbye!")
             break
 
         if user_input.lower() == "clear":
             history.clear()
-            typer.echo("History dihapus.")
+            typer.echo("History cleared.")
             continue
 
         if not user_input.strip():
@@ -45,7 +45,7 @@ def chat_command():
         response, err = run_with_spinner(lambda: provider.chat_sync(messages))
 
         if isinstance(err, KeyboardInterrupt):
-            console.print("\n[yellow]Dibatalkan.[/yellow]")
+            console.print("\n[yellow]Cancelled.[/yellow]")
             history.messages.pop()
             continue
 

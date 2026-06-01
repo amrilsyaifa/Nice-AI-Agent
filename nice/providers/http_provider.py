@@ -21,7 +21,7 @@ class HttpProvider(BaseProvider):
         base_url = config.base_url or os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 
         if not api_key:
-            raise ValueError("api_key belum di-set. Jalankan: nice config set api_key <YOUR_KEY>")
+            raise ValueError("api_key is not set. Run: nice config set api_key <YOUR_KEY>")
 
         payload = {
             "model": config.model,
@@ -43,20 +43,20 @@ class HttpProvider(BaseProvider):
                     timeout=120.0,
                 )
         except httpx.ConnectError:
-            raise RuntimeError("Tidak bisa terhubung ke server. Periksa koneksi internet kamu.")
+            raise RuntimeError("Cannot connect to server. Check your internet connection.")
         except httpx.TimeoutException:
-            raise RuntimeError("Server terlalu lama merespons. Coba lagi sebentar.")
+            raise RuntimeError("Server took too long to respond. Please try again.")
 
         if response.status_code == 401:
-            raise RuntimeError("API key tidak valid. Cek dengan: nice config set api_key <YOUR_KEY>")
+            raise RuntimeError("Invalid API key. Update with: nice config set api_key <YOUR_KEY>")
         if response.status_code == 429:
-            raise RuntimeError("Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.")
+            raise RuntimeError("Too many requests. Wait a moment and try again.")
         if response.status_code == 402:
-            raise RuntimeError("Saldo API habis. Silakan isi ulang.")
+            raise RuntimeError("Insufficient API credits. Please top up your balance.")
         if response.status_code >= 500:
-            raise RuntimeError("Server sedang bermasalah. Coba beberapa saat lagi.")
+            raise RuntimeError("Server is having issues. Please try again later.")
         if response.status_code >= 400:
-            raise RuntimeError(f"Permintaan ditolak server (kode {response.status_code}).")
+            raise RuntimeError(f"Request rejected by server (code {response.status_code}).")
 
         data = response.json()
         message = data["choices"][0]["message"]

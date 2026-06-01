@@ -1,5 +1,5 @@
 import typer
 
 def version_command():
-    """Tampilkan versi Nice."""
+    """Show the Nice version."""
     typer.echo("Nice v0.1.0")

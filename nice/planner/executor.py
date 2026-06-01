@@ -2,31 +2,30 @@ from nice.planner.plan import ExecutionPlan
 from nice.providers.registry import get_active_provider
 from nice.tools.registry import TOOL_DEFINITIONS
 
-EXECUTOR_PROMPT = """Kamu adalah AI engineer yang mengeksekusi satu langkah dari sebuah plan.
+EXECUTOR_PROMPT = """You are an AI engineer executing one step from a plan.
 
-Kamu punya tools: read_file, write_file, run_command, list_directory.
+You have tools: read_file, write_file, run_command, list_directory.
 
-Eksekusi langkah yang diberikan menggunakan tools yang sesuai.
-Jawab dalam Bahasa Indonesia.
-Setelah selesai, laporkan apa yang sudah dilakukan."""
+Execute the given step using the appropriate tools.
+Reply in the same language as the user's input.
+When done, report what you did."""
 
 def execute_step(step_description: str, goal: str) -> tuple[bool, str]:
     """
-    Eksekusi satu step dari plan.
-    Return: (success, output)
+    Execute a single plan step.
+    Returns: (success, output)
     """
     provider = get_active_provider()
     messages = [
         {"role": "system", "content": EXECUTOR_PROMPT},
         {
             "role": "user",
-            "content": f"""
-            Goal keseluruhan: {goal}
+            "content": f"""Overall goal: {goal}
 
-            Langkah yang harus dikerjakan sekarang:
-            {step_description}
+Step to execute now:
+{step_description}
 
-            Eksekusi langkah ini sekarang."""
+Execute this step now."""
         }
     ]
 
@@ -35,14 +34,14 @@ def execute_step(step_description: str, goal: str) -> tuple[bool, str]:
         return True, result
     except Exception as e:
         return False, str(e)
-    
+
 def execute_plan(plan: ExecutionPlan) -> ExecutionPlan:
-    """Eksekusi semua step dalam plan satu per satu."""
-    print(f"\n🚀 Memulai eksekusi plan: {plan.goal}\n")
+    """Execute all steps in the plan one by one."""
+    print(f"\nStarting plan execution: {plan.goal}\n")
 
     for step in plan.steps:
         print(f"\n{'='*50}")
-        print(f"⚡ {step}")
+        print(f"{step}")
         print('='*50)
 
         step.mark_running()
@@ -50,14 +49,13 @@ def execute_plan(plan: ExecutionPlan) -> ExecutionPlan:
 
         if success:
             step.mark_done()
-            print(f"\n✅ Selesai: {output[:200]}...")
+            print(f"\nDone: {output[:200]}...")
         else:
             step.mark_failed()
-            print(f"\n❌ Gagal: {output}")
-            # Tanya user mau lanjut atau stop
-            choice = input("\nStep gagal. Lanjut ke step berikutnya? (y/n): ")
+            print(f"\nFailed: {output}")
+            choice = input("\nStep failed. Continue to next step? (y/n): ")
             if choice.lower() != "y":
-                print("🛑 Eksekusi dihentikan.")
+                print("Execution stopped.")
                 break
+
     return plan
-        
