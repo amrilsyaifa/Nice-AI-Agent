@@ -23,13 +23,18 @@ Rules:
 - Jangan tambahkan penjelasan diluar JSON
 - Response HANYA JSON, tidak ada teks lain"""
 
-def create_plan(goal: str)-> ExecutionPlan:
+def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = None) -> ExecutionPlan:
     """Minta LLM untuk breakdown goal jadi langkah-langkah."""
     provider = get_active_provider()
-    
+
+    content = f"Buat plan untuk: {goal}"
+    if feedback and previous_steps:
+        steps_str = "\n".join(f"{i+1}. {s}" for i, s in enumerate(previous_steps))
+        content += f"\n\nPlan sebelumnya:\n{steps_str}\n\nMasukan dari user: {feedback}\n\nBuat plan yang sudah direvisi."
+
     messages = [
         {"role": "system", "content": PLANNER_PROMPT},
-        {"role": "user", "content": f"Buat plan untuk: {goal}"}
+        {"role": "user", "content": content}
     ]
 
     response = provider.chat_sync(messages)

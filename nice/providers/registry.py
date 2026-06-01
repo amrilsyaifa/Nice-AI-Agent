@@ -1,8 +1,8 @@
 from nice.providers.base import BaseProvider
-from nice.providers.openai_provider import OpenAIProvider
+from nice.providers.http_provider import HttpProvider
 
-PROVIDERS : dict[str, BaseProvider] = {
-    "openai": OpenAIProvider(),
+PROVIDERS: dict[str, BaseProvider] = {
+    "openai": HttpProvider(),
 }
 
 def get_provider(name: str) -> BaseProvider:

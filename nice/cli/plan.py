@@ -1,43 +1,81 @@
+import os
+import sys
+from typing import Optional
 import typer
 from nice.planner.planner import create_plan
 from nice.planner.executor import execute_plan
+from nice.cli._spinner import run_with_spinner, console
 
 def plan_command(
-    goal: str = typer.Argument(..., help="Goal yang ingin dicapai"),
-    execute: bool = typer.Option(False, "--execute", "-e", help="Langsung eksekusi tanpa konfirmasi")
+    goal: Optional[str] = typer.Argument(None, help="Goal yang ingin dicapai"),
+    execute: bool = typer.Option(False, "--execute", "-e", help="Langsung eksekusi tanpa konfirmasi"),
 ):
-    """Buat execution plan untuk sebuah goal, lalu eksekusi."""
-    typer.echo(f"\n🎯 Goal: {goal}")
-    typer.echo("⏳ Membuat plan...\n")
+    """Buat execution plan dengan feedback loop, lalu eksekusi."""
 
-    # Buat plan
-    plan = create_plan(goal)
-    plan.display()
+    if not goal:
+        goal = typer.prompt("Goal")
 
-    if not plan.steps:
-        typer.echo("❌ Tidak bisa membuat plan. Coba lagi.")
-        raise typer.Exit(1)
+    feedback = None
+    previous_steps = None
 
-    # Konfirmasi eksekusi
-    if not execute:
-        confirm = input("Eksekusi plan ini? (y/n): ").strip().lower()
-        if confirm != "y":
+    while True:
+        typer.echo(f"\nGoal: {goal}")
+
+        # Buat plan dengan spinner
+        current_goal = goal
+        current_feedback = feedback
+        current_prev = previous_steps
+
+        plan, err = run_with_spinner(
+            lambda: create_plan(current_goal, current_feedback, current_prev)
+        )
+
+        if isinstance(err, KeyboardInterrupt):
+            console.print("[yellow]Dibatalkan.[/yellow]")
+            return
+        if err:
+            console.print(f"[red]Error:[/red] {err}")
+            return
+
+        plan.display()
+
+        if not plan.steps:
+            console.print("[red]Tidak bisa membuat plan. Coba lagi.[/red]")
+            return
+
+        if execute:
+            break
+
+        # Feedback loop
+        typer.echo("  [a] Approve    [r] Revisi    [c] Cancel")
+        choice = typer.prompt("Pilihan").strip().lower()
+
+        if choice == "a":
+            break
+        elif choice == "r":
+            feedback = typer.prompt("Masukan")
+            previous_steps = [s.description for s in plan.steps]
+            continue
+        else:
             typer.echo("Plan dibatalkan.")
-            raise typer.Exit(0)
+            return
 
-    # Eksekusi
+    # Eksekusi plan
     plan = execute_plan(plan)
 
-    # Summary
-    typer.echo(f"\n{'='*50}")
-    typer.echo("📊 Summary:")
+    # Restore terminal state jika subprocess merusaknya
+    if sys.platform != "win32":
+        os.system("stty sane 2>/dev/null")
+
+    typer.echo(f"\n{'=' * 50}")
+    typer.echo("Summary:")
     plan.display()
 
     done = sum(1 for s in plan.steps if s.status.value == "done")
     total = len(plan.steps)
-    typer.echo(f"\n{done}/{total} steps berhasil.")
+    typer.echo(f"{done}/{total} steps berhasil.")
 
     if plan.is_complete():
-        typer.echo("🎉 Plan selesai!")
+        typer.echo("Plan selesai!")
     else:
-        typer.echo("⚠️  Plan belum selesai sepenuhnya.")
+        typer.echo("Plan belum selesai sepenuhnya.")

@@ -8,8 +8,10 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 
 class NiceConfig(BaseModel):
     """Schema config Nice."""
-    provider:str = "openai"
-    model:str = "liquid/lfm-2.5-1.2b-thinking:free"
+    provider: str = "openai"
+    model: str = "liquid/lfm-2.5-1.2b-thinking:free"
+    api_key: str = ""
+    base_url: str = "https://openrouter.ai/api/v1"
 
 def load_config() -> NiceConfig:
     """Baca config dari file. Kalau belum ada, return default."""

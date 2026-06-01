@@ -1,6 +1,7 @@
 import subprocess
+import os
 
-def run_command(command: str, timeout: int = 30) -> str:
+def run_command(command: str, timeout: int = 60) -> str:
     """Jalankan shell command dan return outputnya."""
 
     # Blocklist command yang berbahaya
@@ -12,11 +13,13 @@ def run_command(command: str, timeout: int = 30) -> str:
         
     try:
         result = subprocess.run(
-            command, 
+            command,
             shell=True,
-            capture_output = True,
-            text = True,
-            timeout = timeout,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            stdin=subprocess.DEVNULL,
+            env={**os.environ, "CI": "true", "NO_COLOR": "1"},
         )
         output = ""
         if result.stdout:

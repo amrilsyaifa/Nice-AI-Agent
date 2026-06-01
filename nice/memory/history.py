@@ -24,6 +24,8 @@ class ConversationHistory:
     
     def add(self, role: str, content: str):
         """Tambah pesan baru ke history."""
+        if not content:
+            return
         self.messages.append({"role": role, "content": content})
         self.save()
 
