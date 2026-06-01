@@ -1,12 +1,12 @@
 import typer
 from nice.providers.registry import get_active_provider
 from nice.config.settings import load_config
+from nice.cli._spinner import stream_markdown, console
 
 def ask_command(prompt: str):
     """Ask the AI a question."""
     config = load_config()
-    typer.echo(f"[{config.provider} / {config.model}]")
-    typer.echo("Thinking...\n")
+    typer.echo(f"[{config.provider} / {config.model}]\n")
 
     messages = [
         {
@@ -20,5 +20,7 @@ def ask_command(prompt: str):
     ]
 
     provider = get_active_provider()
-    result = provider.chat_sync(messages)
-    typer.echo(f"AI: {result}")
+    _, err = stream_markdown(provider, messages)
+
+    if err and not isinstance(err, KeyboardInterrupt):
+        console.print(f"[red]Error:[/red] {err}")

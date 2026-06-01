@@ -2,6 +2,8 @@ import random
 import threading
 import time
 from rich.console import Console
+from rich.live import Live
+from rich.markdown import Markdown
 
 console = Console()
 
@@ -74,3 +76,29 @@ def run_with_spinner(fn) -> tuple:
         return None, KeyboardInterrupt("Dibatalkan.")
 
     return result[0], error[0]
+
+
+def stream_markdown(provider, messages: list, tools: list = None) -> tuple[str, Exception | None]:
+    """
+    Stream provider response with live Markdown rendering.
+    Prints 'AI' label, then renders tokens in-place as they arrive.
+    Returns (full_response, error_or_None).
+    """
+    console.print("[bold]AI[/bold]")
+    full_response = ""
+
+    try:
+        with Live(
+            "",
+            console=console,
+            refresh_per_second=15,
+            vertical_overflow="visible",
+        ) as live:
+            for chunk in provider.chat_stream(messages, tools=tools):
+                full_response += chunk
+                live.update(Markdown(full_response))
+        return full_response, None
+    except KeyboardInterrupt:
+        return full_response, KeyboardInterrupt("Cancelled.")
+    except Exception as e:
+        return full_response, e

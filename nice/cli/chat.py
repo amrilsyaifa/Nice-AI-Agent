@@ -1,8 +1,9 @@
 import typer
 from nice.providers.registry import get_active_provider
 from nice.config.settings import load_config
+from nice.config.context import inject_context
 from nice.memory.history import ConversationHistory
-from nice.cli._spinner import run_with_spinner, console
+from nice.cli._spinner import stream_markdown, console
 
 SYSTEM_PROMPT = "You are a helpful AI assistant named Nice. Reply in the same language as the user's input. You remember the context of previous messages."
 
@@ -40,12 +41,12 @@ def chat_command():
             continue
 
         history.add("user", user_input)
-        messages = history.get_messages(SYSTEM_PROMPT)
+        messages = history.get_messages(inject_context(SYSTEM_PROMPT))
 
-        response, err = run_with_spinner(lambda: provider.chat_sync(messages))
+        response, err = stream_markdown(provider, messages)
 
         if isinstance(err, KeyboardInterrupt):
-            console.print("\n[yellow]Cancelled.[/yellow]")
+            console.print("[yellow]Cancelled.[/yellow]")
             history.messages.pop()
             continue
 
@@ -54,6 +55,5 @@ def chat_command():
             history.messages.pop()
             continue
 
-        console.print(f"[bold]AI:[/bold] {response}")
         history.add("assistant", response)
         typer.echo("-" * 50)

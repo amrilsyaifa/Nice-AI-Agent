@@ -1,5 +1,6 @@
 from nice.providers.registry import get_active_provider
 from nice.tools.registry import execute_tool, TOOL_DEFINITIONS
+from nice.config.context import inject_context
 
 MAX_RETRY = 3
 
@@ -59,7 +60,7 @@ Contents of `{context_file}`:
         error_context += "\nAnalyse this error and fix the problematic file, then re-run the command."
 
         messages = [
-            {"role": "system", "content": REFLECTION_PROMPT},
+            {"role": "system", "content": inject_context(REFLECTION_PROMPT)},
             {"role": "user", "content": error_context},
         ]
 

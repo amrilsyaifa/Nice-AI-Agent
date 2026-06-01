@@ -4,6 +4,7 @@ from typing import Optional
 import typer
 from nice.planner.planner import create_plan
 from nice.planner.executor import execute_plan
+from nice.config.context import load_project_context
 from nice.cli._spinner import run_with_spinner, console
 
 def plan_command(
@@ -14,6 +15,8 @@ def plan_command(
 
     if not goal:
         goal = typer.prompt("Goal")
+
+    project_context = load_project_context()
 
     feedback = None
     previous_steps = None
@@ -26,7 +29,7 @@ def plan_command(
         current_prev = previous_steps
 
         plan, err = run_with_spinner(
-            lambda: create_plan(current_goal, current_feedback, current_prev)
+            lambda: create_plan(current_goal, current_feedback, current_prev, project_context)
         )
 
         if isinstance(err, KeyboardInterrupt):

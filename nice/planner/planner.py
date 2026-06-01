@@ -21,9 +21,13 @@ Rules:
 - No explanations outside the JSON
 - Response ONLY JSON, no other text"""
 
-def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = None) -> ExecutionPlan:
+def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = None, project_context: str = None) -> ExecutionPlan:
     """Ask the LLM to break down a goal into steps."""
     provider = get_active_provider()
+
+    system = PLANNER_PROMPT
+    if project_context:
+        system += f"\n\n## Project Context\n\n{project_context}"
 
     content = f"Create a plan for: {goal}"
     if feedback and previous_steps:
@@ -31,7 +35,7 @@ def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = Non
         content += f"\n\nPrevious plan:\n{steps_str}\n\nUser feedback: {feedback}\n\nCreate a revised plan."
 
     messages = [
-        {"role": "system", "content": PLANNER_PROMPT},
+        {"role": "system", "content": system},
         {"role": "user", "content": content}
     ]
 
