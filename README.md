@@ -1,18 +1,17 @@
 # nice
 
-Your autonomous CLI AI engineer. Ask questions, run interactive chats, execute coding tasks with file/shell tools, plan and execute multi-step goals, and auto-fix broken commands — all from the terminal.
+Your autonomous CLI AI engineer. Ask questions, run interactive chats, execute coding tasks with file and shell tools, plan and execute multi-step goals, review and explain code, generate commit messages, and auto-fix broken commands — all from the terminal.
 
 ## Features
 
 - **Streaming output** — responses render token-by-token with full Markdown formatting
-- **`ask`** — one-shot question to the AI
-- **`chat`** — persistent interactive chat with conversation memory
-- **`code`** — AI coding agent with read/write/shell tools and persistent session history
-- **`plan`** — break a goal into steps, review/revise the plan, then execute it
-- **`fix`** — run a command with automatic error-reflection and retry loop
-- **`config`** — manage provider, model, and API settings
-- **Context file** — place a `.nice.md` in any project directory for automatic project context
-- **Diff preview** — shows a diff and asks for confirmation before the AI writes any file
+- **Multiple providers** — OpenAI-compatible (OpenRouter), Anthropic Claude, Ollama (local)
+- **9 built-in tools** — read/write files, run commands, web search, fetch URLs, git operations
+- **Context file** — place `.nice.md` in any project for automatic AI context injection
+- **Diff preview** — shows a coloured diff before the AI writes any file
+- **Persistent history** — `chat` and `code` sessions resume where you left off
+- **Plugin system** — drop a `.py` file in `~/.nice/plugins/` to add custom tools or commands
+- **Activity log** — everything logged to `~/.nice/nice.log`
 
 ## Requirements
 
@@ -22,15 +21,11 @@ Your autonomous CLI AI engineer. Ask questions, run interactive chats, execute c
 
 ## Installation
 
-Install uv if you haven't:
-
 ```bash
+# Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
 
-Clone and sync dependencies:
-
-```bash
+# Clone and sync
 git clone <repo-url>
 cd nice
 uv sync
@@ -42,147 +37,210 @@ Run without installing globally:
 uv run nice ask "What is recursion?"
 ```
 
-Or activate the virtualenv:
-
-```bash
-source .venv/bin/activate
-nice ask "What is recursion?"
-```
-
-Install globally (available everywhere without activating venv):
+Install globally (available everywhere):
 
 ```bash
 uv tool install .
-```
-
-Uninstall:
-
-```bash
-uv tool uninstall nice
+uv tool uninstall nice   # to remove
 ```
 
 ## Configuration
 
-All config is stored at `~/.nice/config.json`. Set values with:
+All config lives at `~/.nice/config.json`.
 
 ```bash
-nice config set api_key  YOUR_API_KEY
-nice config set base_url https://openrouter.ai/api/v1
-nice config set model    openai/gpt-4o
+nice config set api_key   YOUR_API_KEY
+nice config set base_url  https://openrouter.ai/api/v1
+nice config set model     openai/gpt-4o
+nice config set provider  openai
+
+nice config list          # show all settings
+nice config get model     # get one value
+```
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `provider` | `openai` | Active provider: `openai`, `claude`, `ollama` |
+| `model` | `liquid/lfm-2.5-1.2b-thinking:free` | Model name |
+| `api_key` | *(required)* | API key for the active provider |
+| `base_url` | `https://openrouter.ai/api/v1` | API base URL |
+| `show_usage` | `false` | Print token count after every response |
+| `command_timeout` | `60` | Shell command timeout in seconds |
+| `confirm_commands` | `false` | Ask before running any shell command |
+| `blocked_commands` | *(empty)* | Extra patterns to block (comma-separated) |
+| `log_level` | `warning` | Log verbosity: `debug`, `info`, `warning`, `error` |
+
+### Provider setup
+
+**OpenAI / OpenRouter (default)**
+```bash
 nice config set provider openai
+nice config set api_key  YOUR_OPENROUTER_KEY
 ```
 
-| Key        | Default                              |
-|------------|--------------------------------------|
-| `provider` | `openai`                             |
-| `model`    | `liquid/lfm-2.5-1.2b-thinking:free`  |
-| `api_key`  | *(required)*                         |
-| `base_url` | `https://openrouter.ai/api/v1`       |
-
-View current config:
-
+**Anthropic Claude**
 ```bash
-nice config list
-nice config get model
+nice config set provider claude
+nice config set api_key  YOUR_ANTHROPIC_KEY
+nice config set model    claude-sonnet-4-6
 ```
 
-## Usage
+**Ollama (local, no internet)**
+```bash
+ollama pull llama3.2
+nice config set provider ollama
+nice config set model    llama3.2
+# base_url defaults to http://localhost:11434/v1 — no api_key needed
+```
 
-### Ask a single question
+---
+
+## Commands
+
+### `nice ask`
+
+One-shot question. Streams a Markdown response.
 
 ```bash
 nice ask "What is a race condition?"
+nice ask "List sorting algorithms" --quiet   # plain text, no decoration
 ```
 
-### Interactive chat (with persistent memory)
+### `nice chat`
+
+Interactive chat with persistent memory and named sessions.
 
 ```bash
-nice chat
+nice chat                          # default session
+nice chat --session work           # named session
+nice chat --list                   # list all sessions
+nice chat --delete work            # delete a session
+nice chat --session work --export  # export to Markdown
+nice chat --session work --export-json
 ```
 
-Conversation history is saved to `~/.nice/history.json` and resumed on the next run.
+In-session commands:
 
 | Command | Action |
 |---------|--------|
-| `exit`  | End the session |
-| `clear` | Wipe conversation history |
+| `exit` | End the session |
+| `clear` | Reset history |
+| `/model <name>` | Switch model without restarting |
+| `/context <file>` | Load a file as extra context for this session |
+| `/usage` | Show token count from last request |
+| `/help` | List all commands |
 
-### Coding agent
+History is saved to `~/.nice/history.json` (default) or `~/.nice/sessions/<name>.json`.
+When total conversation length exceeds 40,000 characters, older messages are automatically summarised to keep context manageable.
 
-One-shot:
+### `nice code`
+
+AI coding agent with tools. One-shot or interactive.
 
 ```bash
-nice code "Create a Python script that fetches weather data from an API"
+nice code "Create a FastAPI hello-world app"   # one-shot
+nice code                                       # interactive (history persists)
+nice code --clear                               # reset interactive history
+nice code "Create config.json" --quiet          # plain output for scripting
 ```
 
-Interactive mode (session history persists across runs):
+Interactive mode has the same slash commands as `nice chat`.
+History saved to `~/.nice/code_history.json`.
 
-```bash
-nice code
-```
+### `nice plan`
 
-```
-You: create a file hello.py that prints Hello World
-AI: ...
-You: add a name argument to the script
-AI: ...
-```
-
-| Command        | Action |
-|----------------|--------|
-| `exit`         | End the session |
-| `clear`        | Wipe code session history |
-| `nice code --clear` | Clear history without entering the session |
-
-The agent can use these tools:
-
-| Tool             | Description                      |
-|------------------|----------------------------------|
-| `read_file`      | Read a file from disk            |
-| `write_file`     | Write or create a file (shows diff preview first) |
-| `list_directory` | List the contents of a directory |
-| `run_command`    | Execute a shell command          |
-
-### Planning agent
+Break a goal into steps, review/revise the plan, then execute.
 
 ```bash
 nice plan "Build a REST API with Flask"
+nice plan          # prompts for goal interactively
+nice plan -e "..." # skip review, execute immediately
 ```
 
-Or omit the goal to be prompted:
+At the plan review prompt:
 
-```bash
-nice plan
-```
+| Choice | Action |
+|--------|--------|
+| `a` | Approve and execute |
+| `r` | Revise — type feedback, get a new plan |
+| `c` | Cancel |
 
-Nice creates a step-by-step execution plan, then enters a feedback loop:
+### `nice fix`
 
-```
-  [a] Approve    [r] Revise    [c] Cancel
-Choice: r
-Feedback: use FastAPI instead of Flask
-```
-
-After approval, each step is executed automatically using the coding tools. Pass `--execute` / `-e` to skip the review loop.
-
-### Auto-fix a failing command
+Run a command and auto-fix errors (up to 3 attempts).
 
 ```bash
 nice fix "python main.py"
-nice fix "pytest tests/" --file src/main.py
+nice fix "pytest tests/" --file src/main.py   # give AI the file for context
 ```
 
-`fix` runs the command, detects errors, asks the AI to patch the file, then retries — up to 3 times automatically. Pass `--file` to give the AI the relevant file as extra context.
+### `nice review`
 
-### Version
+Review code for bugs, issues, and improvements. Output uses `[ERROR]`, `[WARNING]`, `[INFO]` tags.
+
+```bash
+nice review main.py          # single file
+nice review src/             # whole directory (skips node_modules, .git, etc.)
+```
+
+### `nice explain`
+
+Explain what a piece of code does.
+
+```bash
+nice explain utils.py         # whole file
+nice explain utils.py:42      # focus on line 42 (±40 lines shown)
+```
+
+### `nice commit`
+
+Generate a commit message from staged changes.
+
+```bash
+nice commit          # uses git diff --cached
+nice commit --all    # stages all tracked changes first (git add -u)
+```
+
+Options at the review prompt: `[a]` accept · `[e]` edit · `[c]` cancel.
+
+### `nice test`
+
+Run a test suite and auto-fix failures (up to 3 attempts).
+
+```bash
+nice test "pytest"
+nice test "npm test"
+```
+
+### `nice version`
 
 ```bash
 nice version
 ```
 
+---
+
+## Tools
+
+All tools are available to the AI in `code`, `plan`, `fix`, and `test`.
+
+| Tool | Description |
+|------|-------------|
+| `read_file` | Read a file from disk |
+| `write_file` | Write/create a file (shows diff preview first) |
+| `list_directory` | List directory contents |
+| `run_command` | Execute a shell command |
+| `web_search` | Search with DuckDuckGo (no API key needed) |
+| `fetch_url` | Fetch and read a web page as text |
+| `git_status` | `git status --short --branch` |
+| `git_diff` | Working-tree or staged diff |
+| `git_log` | Recent commit history |
+
+---
+
 ## Context file
 
-Create a `.nice.md` in your project root to give Nice automatic context about the project:
+Create `.nice.md` in any project root:
 
 ```markdown
 ## Stack
@@ -191,15 +249,17 @@ Create a `.nice.md` in your project root to give Nice automatic context about th
 
 ## Conventions
 - Components in `src/components/`, one file per component
-- Use named exports only
-- All API calls go through `src/lib/api.ts`
+- Named exports only
+- API calls go through `src/lib/api.ts`
 ```
 
-Nice reads `.nice.md` automatically when you run `code`, `chat`, `plan`, or `fix` from that directory. No flags needed.
+`nice` reads `.nice.md` automatically in `ask`, `chat`, `code`, `plan`, and `fix`. No flags needed.
+
+---
 
 ## Diff preview
 
-Before the AI writes any file, Nice shows a diff and asks for confirmation:
+Before writing any file the AI shows a diff and asks for confirmation:
 
 ```
 Diff preview: src/App.tsx
@@ -209,58 +269,137 @@ Diff preview: src/App.tsx
  import React from 'react'
 -function App() {
 +function App({ name }: { name: string }) {
-+  const title = `Hello, ${name}`
 Apply? [y/n]:
 ```
 
 New files show a preview of the first 20 lines before creation.
+
+---
+
+## Security
+
+```bash
+# Block specific command patterns
+nice config set blocked_commands "sudo rm,git push --force,npm publish"
+
+# Require confirmation before every shell command
+nice config set confirm_commands true
+```
+
+Certain commands are always blocked regardless of config: `rm -rf /`, `mkfs`, `dd if=`, fork bombs, and similar destructive operations.
+
+---
+
+## Plugin system
+
+Drop a `.py` file in `~/.nice/plugins/` to extend Nice with custom tools or CLI commands:
+
+```python
+# ~/.nice/plugins/jira.py
+
+TOOL_DEFINITIONS = [{
+    "type": "function",
+    "function": {
+        "name": "get_jira_ticket",
+        "description": "Fetch a Jira ticket",
+        "parameters": {
+            "type": "object",
+            "properties": {"ticket_id": {"type": "string"}},
+            "required": ["ticket_id"]
+        }
+    }
+}]
+
+TOOL_FUNCTIONS = {
+    "get_jira_ticket": lambda ticket_id: f"Ticket {ticket_id}: ..."
+}
+
+# Optional: add a new CLI command
+import typer
+
+def command_jira(ticket_id: str):
+    """Open a Jira ticket."""
+    typer.echo(f"Opening {ticket_id}...")
+
+COMMANDS = {"jira": command_jira}
+```
+
+Plugins are loaded at startup. Errors in a plugin print a warning but do not crash the app.
+
+---
+
+## Logging
+
+```bash
+nice config set log_level info    # debug | info | warning | error
+tail -f ~/.nice/nice.log
+```
+
+Logs include: tool calls, API requests, plugin loading, blocked commands, and errors.
+
+---
 
 ## Project structure
 
 ```
 nice/
 ├── nice/
-│   ├── main.py              # CLI entry point
+│   ├── main.py                  # CLI entry point + plugin loader
 │   ├── cli/
-│   │   ├── _spinner.py      # Spinner + stream_markdown helper
-│   │   ├── ask.py           # nice ask
-│   │   ├── chat.py          # nice chat
-│   │   ├── code.py          # nice code
-│   │   ├── fix.py           # nice fix
-│   │   ├── plan.py          # nice plan
-│   │   ├── config_cmd.py    # nice config
-│   │   └── version.py       # nice version
+│   │   ├── _slash.py            # Shared slash-command helpers
+│   │   ├── _spinner.py          # stream_markdown, stream_quiet, run_with_spinner
+│   │   ├── ask.py               # nice ask
+│   │   ├── chat.py              # nice chat
+│   │   ├── code.py              # nice code
+│   │   ├── commit.py            # nice commit
+│   │   ├── explain.py           # nice explain
+│   │   ├── fix.py               # nice fix
+│   │   ├── plan.py              # nice plan
+│   │   ├── review.py            # nice review
+│   │   ├── test_cmd.py          # nice test
+│   │   ├── version.py           # nice version
+│   │   └── config_cmd.py        # nice config
 │   ├── config/
-│   │   ├── settings.py      # Load/save ~/.nice/config.json
-│   │   └── context.py       # .nice.md project context loader
+│   │   ├── settings.py          # NiceConfig — load/save ~/.nice/config.json
+│   │   └── context.py           # .nice.md loader
 │   ├── core/
-│   │   └── reflection.py    # Error-reflection retry loop
+│   │   ├── logger.py            # Logging setup → ~/.nice/nice.log
+│   │   └── reflection.py        # Error-reflection retry loop (nice fix)
 │   ├── memory/
-│   │   └── history.py       # Persistent conversation history
+│   │   └── history.py           # ConversationHistory, sessions, export, compress
 │   ├── planner/
-│   │   ├── plan.py          # ExecutionPlan + Step data classes
-│   │   ├── planner.py       # LLM-driven plan creation
-│   │   └── executor.py      # Step-by-step plan execution
+│   │   ├── plan.py              # ExecutionPlan + Step data classes
+│   │   ├── planner.py           # LLM plan creation with feedback support
+│   │   └── executor.py          # Step-by-step plan execution
+│   ├── plugins/
+│   │   └── loader.py            # Load ~/.nice/plugins/*.py at startup
 │   ├── providers/
-│   │   ├── base.py          # BaseProvider abstract class
-│   │   ├── http_provider.py # OpenAI-compatible HTTP provider (streaming)
-│   │   └── registry.py      # Provider lookup
+│   │   ├── base.py              # BaseProvider ABC
+│   │   ├── http_provider.py     # OpenAI-compatible (streaming, tool use, usage tracking)
+│   │   ├── claude_provider.py   # Anthropic direct API
+│   │   ├── ollama_provider.py   # Ollama local models
+│   │   └── registry.py          # Provider lookup
 │   └── tools/
-│       ├── file_tools.py    # read_file, write_file (diff preview), list_directory
-│       ├── shell_tools.py   # run_command
-│       └── registry.py      # Tool definitions + executor
+│       ├── file_tools.py        # read_file, write_file (diff), list_directory
+│       ├── shell_tools.py       # run_command (blocklist, confirm, configurable timeout)
+│       ├── web_tools.py         # web_search, fetch_url
+│       ├── git_tools.py         # git_status, git_diff, git_log
+│       └── registry.py          # TOOL_DEFINITIONS, TOOL_FUNCTIONS, execute_tool
 └── pyproject.toml
 ```
 
 ## How it works
 
-1. **Streaming** — `HttpProvider.chat_stream` calls any OpenAI-compatible endpoint with `stream: true`, yields text tokens, accumulates tool call chunks, executes tools, then streams the follow-up response. Rendered live as Markdown via Rich.
-2. **Tool calling** — when the LLM returns `tool_calls`, the provider executes each tool locally, appends results into the message list, and re-queries until it returns plain text.
-3. **Diff preview** — `write_file` computes a `difflib.unified_diff` against the current file, displays it with colour, and requires explicit `y` confirmation before writing.
-4. **Planning** — `create_plan` sends the goal to the LLM and parses a JSON step list. `execute_plan` runs each step with tools, tracking status (pending / running / done / failed).
-5. **Reflection loop** — `nice fix` wraps a command in a retry loop; on failure it hands the error + optional file context to the LLM which patches the file, then retries.
-6. **Memory** — `ConversationHistory` serialises the message list to `~/.nice/<name>.json` after every turn. `chat` uses `history.json`, `code` interactive mode uses `code_history.json`.
-7. **Context** — `inject_context` reads `.nice.md` from the current directory and appends it to the system prompt before every request.
+1. **Startup** — `main.py` callback runs before every command: sets up logging, loads plugins, extends tool registry.
+2. **Streaming** — `HttpProvider.chat_stream` sends `stream: true`, yields text tokens, accumulates tool-call chunks, executes tools, then yields the follow-up stream. Rendered live as Markdown via Rich `Live`.
+3. **Tool calling** — when the LLM returns `tool_calls`, the provider executes each locally, appends results to the message list, and re-queries until it returns plain text.
+4. **Diff preview** — `write_file` computes `difflib.unified_diff`, displays it colour-coded, and requires `y` before writing.
+5. **Planning** — `create_plan` parses a JSON step list from the LLM. `execute_plan` runs each step with tools and tracks status.
+6. **Reflection loop** — `nice fix` wraps a command in a retry loop; on failure the LLM patches the file with tools, then retries.
+7. **Memory** — `ConversationHistory` serialises to `~/.nice/<name>.json` after every turn. Auto-compresses when >40 k chars.
+8. **Context** — `inject_context` reads `.nice.md` and appends it to the system prompt before every request.
+9. **Security** — `run_command` checks against a hardcoded blocklist plus user-configured patterns. Optional confirm prompt.
+10. **Plugins** — `load_plugins` imports `*.py` from `~/.nice/plugins/`, merges `TOOL_DEFINITIONS`, `TOOL_FUNCTIONS`, and `COMMANDS` into the live registry.
 
 ## License
 

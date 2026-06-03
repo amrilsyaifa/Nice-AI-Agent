@@ -7,11 +7,14 @@ VALID_KEYS = (
     "provider", "model", "api_key", "base_url",
     "show_usage", "command_timeout",
     "blocked_commands", "confirm_commands",
+    "log_level",
 )
 
-BOOL_KEYS = ("show_usage", "confirm_commands")
-INT_KEYS  = ("command_timeout",)
-LIST_KEYS = ("blocked_commands",)
+BOOL_KEYS  = ("show_usage", "confirm_commands")
+INT_KEYS   = ("command_timeout",)
+LIST_KEYS  = ("blocked_commands",)
+LEVEL_KEYS = ("log_level",)
+VALID_LEVELS = ("debug", "info", "warning", "error")
 
 
 @config_app.command("set")
@@ -27,7 +30,12 @@ def config_set(key: str, value: str):
 
     config = load_config()
 
-    if key in BOOL_KEYS:
+    if key in LEVEL_KEYS:
+        if value.lower() not in VALID_LEVELS:
+            typer.echo(f"Invalid log level '{value}'. Use: {', '.join(VALID_LEVELS)}")
+            raise typer.Exit(1)
+        config.log_level = value.lower()
+    elif key in BOOL_KEYS:
         setattr(config, key, value.lower() in ("true", "1", "yes"))
     elif key in INT_KEYS:
         try:
@@ -67,3 +75,4 @@ def config_list():
     typer.echo(f"confirm_commands  = {config.confirm_commands}")
     blocked = ", ".join(config.blocked_commands) if config.blocked_commands else "(none)"
     typer.echo(f"blocked_commands  = {blocked}")
+    typer.echo(f"log_level         = {config.log_level}")

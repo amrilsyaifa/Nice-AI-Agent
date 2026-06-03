@@ -4,6 +4,9 @@ import os
 from typing import Iterator
 from nice.providers.base import BaseProvider
 from nice.config.settings import load_config
+from nice.core.logger import get_logger
+
+log = get_logger("http_provider")
 
 
 class HttpProvider(BaseProvider):
@@ -175,6 +178,7 @@ class HttpProvider(BaseProvider):
         data = response.json()
         if data.get("usage"):
             self._last_usage = data["usage"]
+            log.info("chat_sync usage: %s", self._last_usage)
         message = data["choices"][0]["message"]
 
         if "tool_calls" in message:
@@ -191,8 +195,10 @@ class HttpProvider(BaseProvider):
             tool_name = tc["function"]["name"]
             tool_args = json.loads(tc["function"]["arguments"])
 
+            log.info("tool_call: %s(%s)", tool_name, tool_args)
             print(f"\n🔧 Running tool: {tool_name}({tool_args})")
             result = execute_tool(tool_name, tool_args)
+            log.debug("tool_result: %s", result[:200])
             print(f"✅ Result: {result[:100]}...")
 
             updated.append({

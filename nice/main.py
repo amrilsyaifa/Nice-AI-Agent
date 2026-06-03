@@ -17,6 +17,25 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+
+@app.callback()
+def startup() -> None:
+    """Initialise logging and load plugins before any command runs."""
+    from nice.config.settings import load_config
+    from nice.core.logger import setup_logging
+    from nice.plugins.loader import load_plugins
+    from nice.tools.registry import TOOL_DEFINITIONS, TOOL_FUNCTIONS
+
+    config = load_config()
+    setup_logging(config.log_level)
+
+    extra_defs, extra_funcs, extra_commands = load_plugins()
+    TOOL_DEFINITIONS.extend(extra_defs)
+    TOOL_FUNCTIONS.update(extra_funcs)
+    for name, fn in extra_commands.items():
+        app.command(name)(fn)
+
+
 app.command("ask")(ask_command)
 app.command("chat")(chat_command)
 app.command("code")(code_command)

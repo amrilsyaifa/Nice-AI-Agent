@@ -1,5 +1,8 @@
 import os
 import subprocess
+from nice.core.logger import get_logger
+
+log = get_logger("shell")
 
 # These are always blocked, regardless of user config.
 _ALWAYS_BLOCKED = [
@@ -34,7 +37,10 @@ def run_command(command: str, timeout: int = None) -> str:
     # Security: check blocklist
     matched = _is_blocked(command, config.blocked_commands)
     if matched:
+        log.warning("Blocked command: %r (matched: %r)", command, matched)
         return f"Error: Command blocked — matched pattern '{matched}'."
+
+    log.info("run_command: %r", command)
 
     # Security: confirm before running (if enabled)
     if config.confirm_commands:
@@ -63,6 +69,8 @@ def run_command(command: str, timeout: int = None) -> str:
             output += f"\nSTDERR: {result.stderr}"
         return output.strip() or "(no output)"
     except subprocess.TimeoutExpired:
+        log.error("Command timed out after %ds: %r", timeout, command)
         return f"Error: Command timed out after {timeout}s."
     except Exception as e:
+        log.error("Command error: %s", e)
         return f"Error: {e}"

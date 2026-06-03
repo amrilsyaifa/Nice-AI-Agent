@@ -14,6 +14,7 @@ class NiceConfig(BaseModel):
     command_timeout: int = 60
     blocked_commands: list[str] = []
     confirm_commands: bool = False
+    log_level: str = "warning"
 
 def load_config() -> NiceConfig:
     if not CONFIG_FILE.exists():
