@@ -96,22 +96,42 @@ def stream_quiet(provider, messages: list, tools: list = None) -> tuple[str, Exc
 def stream_markdown(provider, messages: list, tools: list = None) -> tuple[str, Exception | None]:
     """
     Stream provider response with live Markdown rendering.
-    Prints 'AI' label, then renders tokens in-place as they arrive.
-    Returns (full_response, error_or_None).
+    Shows a spinner until the first token arrives, then renders tokens
+    in-place as Markdown. Returns (full_response, error_or_None).
     """
     console.print("[bold]AI[/bold]")
     full_response = ""
 
     try:
+        gen = provider.chat_stream(messages, tools=tools)
+
+        # Show spinner while waiting for first token
+        first_chunk = None
+        with console.status(
+            f"[dim]{random.choice(THINKING_MESSAGES)}[/dim]", spinner="dots"
+        ) as status:
+            while first_chunk is None:
+                try:
+                    first_chunk = next(gen)
+                except StopIteration:
+                    return "", None
+                if first_chunk == "":
+                    # Empty chunk — keep spinner, try next
+                    status.update(f"[dim]{random.choice(THINKING_MESSAGES)}[/dim]")
+                    first_chunk = None
+
+        # First token arrived — render progressively
+        full_response = first_chunk
         with Live(
-            "",
+            Markdown(full_response),
             console=console,
             refresh_per_second=15,
             vertical_overflow="visible",
         ) as live:
-            for chunk in provider.chat_stream(messages, tools=tools):
+            for chunk in gen:
                 full_response += chunk
                 live.update(Markdown(full_response))
+
         return full_response, None
     except KeyboardInterrupt:
         return full_response, KeyboardInterrupt("Cancelled.")
