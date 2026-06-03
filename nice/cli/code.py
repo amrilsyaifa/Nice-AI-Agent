@@ -1,6 +1,6 @@
 from typing import Optional
 import typer
-from nice.config.settings import load_config
+from nice.config.settings import load_config, save_config
 from nice.config.context import inject_context
 from nice.providers.registry import get_active_provider
 from nice.tools.registry import TOOL_DEFINITIONS
@@ -42,7 +42,7 @@ def code_command(
         return
 
     console.print(f"[bold]Nice Code[/bold] [{config.provider} / {config.model}]")
-    console.print("Type 'exit' to quit, 'clear' to reset history.")
+    console.print("Type 'exit' to quit, 'clear' to reset history, '/model <name>' to switch model.")
     console.print("-" * 50)
 
     if not history.is_empty():
@@ -64,6 +64,17 @@ def code_command(
         if user_input.lower() == "clear":
             history.clear()
             typer.echo("History cleared.")
+            continue
+
+        if user_input.lower().startswith("/model "):
+            new_model = user_input[7:].strip()
+            if new_model:
+                config = load_config()
+                config.model = new_model
+                save_config(config)
+                console.print(f"[green]Model switched to:[/green] {new_model}")
+            else:
+                console.print(f"[dim]Current model:[/dim] {config.model}")
             continue
 
         if not user_input.strip():

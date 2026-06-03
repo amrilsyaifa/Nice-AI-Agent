@@ -1,6 +1,6 @@
 import typer
 from nice.providers.registry import get_active_provider
-from nice.config.settings import load_config
+from nice.config.settings import load_config, save_config
 from nice.config.context import inject_context
 from nice.memory.history import ConversationHistory
 from nice.cli._spinner import stream_markdown, console
@@ -15,7 +15,7 @@ def chat_command():
     history = ConversationHistory()
 
     typer.echo(f"Nice Chat [{config.provider} / {config.model}]")
-    typer.echo("Type 'exit' to quit, 'clear' to reset history.")
+    typer.echo("Type 'exit' to quit, 'clear' to reset history, '/model <name>' to switch model.")
     typer.echo("-" * 50)
 
     if not history.is_empty():
@@ -35,6 +35,17 @@ def chat_command():
         if user_input.lower() == "clear":
             history.clear()
             typer.echo("History cleared.")
+            continue
+
+        if user_input.lower().startswith("/model "):
+            new_model = user_input[7:].strip()
+            if new_model:
+                config = load_config()
+                config.model = new_model
+                save_config(config)
+                console.print(f"[green]Model switched to:[/green] {new_model}")
+            else:
+                console.print(f"[dim]Current model:[/dim] {config.model}")
             continue
 
         if not user_input.strip():
