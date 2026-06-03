@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+  id-token: write   # needed for PyPI trusted publishing
+
+jobs:
+  # ── 1. Build standalone binaries ──────────────────────────────────────────
+  build:
+    name: Build binary (${{ matrix.artifact }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest      # Apple Silicon (M-series)
+            artifact: nice-macos-arm64
+            binary: nice
+          - os: macos-13          # Intel Mac
+            artifact: nice-macos-x86_64
+            binary: nice
+          - os: ubuntu-latest
+            artifact: nice-linux-x86_64
+            binary: nice
+          - os: windows-latest
+            artifact: nice-windows-x86_64
+            binary: nice.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install with dev dependencies
+        run: uv sync --extra dev
+
+      - name: Build binary
+        run: uv run pyinstaller nice.spec --clean
+
+      - name: Rename binary
+        shell: bash
+        run: |
+          mkdir -p dist/out
+          mv dist/${{ matrix.binary }} dist/out/${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/out/
+
+  # ── 2. Create GitHub Release and attach binaries ──────────────────────────
+  release:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for changelog
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/out
+          merge-multiple: true
+
+      - name: List binaries
+        run: ls -lh dist/out/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/out/*
+
+  # ── 3. Publish to PyPI ────────────────────────────────────────────────────
+  pypi:
+    name: PyPI publish
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/nice-ai/
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build wheel + sdist
+        run: uv build
+
+      - name: Publish
+        run: uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
