@@ -1,22 +1,74 @@
 [project]
-name = "nice"
+name = "nice-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Your autonomous CLI AI engineer"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.13"
+authors = [
+    { name = "iamrils", email = "amrilsyaifa@gmail.com" },
+]
+keywords = ["ai", "cli", "agent", "llm", "openai", "anthropic", "ollama"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+
 dependencies = [
-    "hatchling>=1.29.0",
     "httpx>=0.28.1",
     "nest-asyncio>=1.6.0",
+    "pydantic>=2.0.0",
     "pydantic-settings>=2.14.1",
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",
     "typer>=0.26.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.9.0",
+    "pyinstaller>=6.0.0",
+]
+
 [project.scripts]
 nice = "nice.main:app"
+
+[project.urls]
+Homepage = "https://github.com/iamrils/nice"
+Repository = "https://github.com/iamrils/nice"
+Issues = "https://github.com/iamrils/nice/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# ── Ruff ────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long — handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"nice.spec" = ["E402", "F821"]   # PyInstaller spec uses bare names
+"_entry.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
