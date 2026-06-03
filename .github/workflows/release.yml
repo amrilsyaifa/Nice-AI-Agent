@@ -26,9 +26,6 @@ jobs:
           - os: macos-latest       # Apple Silicon (M-series)
             artifact: nice-macos-arm64
             exe: nice
-          - os: macos-13           # Intel Mac
-            artifact: nice-macos-x86_64
-            exe: nice
           - os: ubuntu-latest
             artifact: nice-linux-x86_64
             exe: nice
