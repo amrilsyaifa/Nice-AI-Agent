@@ -1,11 +1,13 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+
 class StepStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"
     FAILED = "failed"
+
 
 @dataclass
 class Step:
@@ -15,10 +17,10 @@ class Step:
 
     def mark_done(self):
         self.status = StepStatus.DONE
-    
+
     def mark_failed(self):
         self.status = StepStatus.FAILED
-    
+
     def mark_running(self):
         self.status = StepStatus.RUNNING
 
@@ -26,15 +28,15 @@ class Step:
         icons = {
             StepStatus.PENDING: "[ ]",
             StepStatus.RUNNING: "[→]",
-            StepStatus.DONE:    "[✅]",
-            StepStatus.FAILED:  "[❌]",
+            StepStatus.DONE: "[✅]",
+            StepStatus.FAILED: "[❌]",
         }
 
         return icons[self.status]
 
     def __str__(self):
         return f"{self.status_icon()} Step {self.number}: {self.description}"
-    
+
 
 @dataclass
 class ExecutionPlan:
@@ -47,14 +49,13 @@ class ExecutionPlan:
 
     def pending_steps(self) -> list[Step]:
         return [step for step in self.steps if step.status == StepStatus.PENDING]
-    
+
     def is_complete(self) -> bool:
         return all(step.status == StepStatus.DONE for step in self.steps)
-    
+
     def display(self):
         print(f"\n📋 Plan: {self.goal}")
         print("-" * 50)
         for step in self.steps:
             print(f"  {step}")
         print()
-

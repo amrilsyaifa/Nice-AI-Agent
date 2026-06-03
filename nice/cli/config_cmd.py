@@ -1,18 +1,24 @@
 import typer
+
 from nice.config.settings import load_config, save_config
 
 config_app = typer.Typer(help="Manage Nice configuration.")
 
 VALID_KEYS = (
-    "provider", "model", "api_key", "base_url",
-    "show_usage", "command_timeout",
-    "blocked_commands", "confirm_commands",
+    "provider",
+    "model",
+    "api_key",
+    "base_url",
+    "show_usage",
+    "command_timeout",
+    "blocked_commands",
+    "confirm_commands",
     "log_level",
 )
 
-BOOL_KEYS  = ("show_usage", "confirm_commands")
-INT_KEYS   = ("command_timeout",)
-LIST_KEYS  = ("blocked_commands",)
+BOOL_KEYS = ("show_usage", "confirm_commands")
+INT_KEYS = ("command_timeout",)
+LIST_KEYS = ("blocked_commands",)
 LEVEL_KEYS = ("log_level",)
 VALID_LEVELS = ("debug", "info", "warning", "error")
 
@@ -68,7 +74,11 @@ def config_list():
     config = load_config()
     typer.echo(f"provider          = {config.provider}")
     typer.echo(f"model             = {config.model}")
-    typer.echo(f"api_key           = {config.api_key[:8]}..." if config.api_key else "api_key           = (not set)")
+    typer.echo(
+        f"api_key           = {config.api_key[:8]}..."
+        if config.api_key
+        else "api_key           = (not set)"
+    )
     typer.echo(f"base_url          = {config.base_url}")
     typer.echo(f"show_usage        = {config.show_usage}")
     typer.echo(f"command_timeout   = {config.command_timeout}s")

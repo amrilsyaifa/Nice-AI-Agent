@@ -1,5 +1,6 @@
 import os
 import subprocess
+
 from nice.core.logger import get_logger
 
 log = get_logger("shell")
@@ -11,7 +12,7 @@ _ALWAYS_BLOCKED = [
     "rm -rf *",
     "mkfs",
     "dd if=",
-    ":(){:|:&};:",     # fork bomb
+    ":(){:|:&};:",  # fork bomb
     "chmod -R 777 /",
     "DROP TABLE",
     "> /dev/sda",
@@ -29,6 +30,7 @@ def _is_blocked(command: str, extra: list[str]) -> str | None:
 def run_command(command: str, timeout: int = None) -> str:
     """Execute a shell command and return its output."""
     from nice.config.settings import load_config
+
     config = load_config()
 
     if timeout is None:

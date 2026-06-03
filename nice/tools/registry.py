@@ -1,7 +1,7 @@
-from nice.tools.file_tools import read_file, write_file, list_directory
+from nice.tools.file_tools import list_directory, read_file, write_file
+from nice.tools.git_tools import git_diff, git_log, git_status
 from nice.tools.shell_tools import run_command
-from nice.tools.web_tools import web_search, fetch_url
-from nice.tools.git_tools import git_status, git_diff, git_log
+from nice.tools.web_tools import fetch_url, web_search
 
 TOOL_DEFINITIONS = [
     {
@@ -11,9 +11,7 @@ TOOL_DEFINITIONS = [
             "description": "Read the contents of a file from disk.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Path to the file"}
-                },
+                "properties": {"path": {"type": "string", "description": "Path to the file"}},
                 "required": ["path"],
             },
         },
@@ -41,7 +39,10 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "path": {"type": "string", "description": "Directory path (default: current directory)"}
+                    "path": {
+                        "type": "string",
+                        "description": "Directory path (default: current directory)",
+                    }
                 },
                 "required": [],
             },
@@ -70,7 +71,10 @@ TOOL_DEFINITIONS = [
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "Search query"},
-                    "max_results": {"type": "integer", "description": "Maximum results to return (default 5)"},
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum results to return (default 5)",
+                    },
                 },
                 "required": ["query"],
             },
@@ -85,7 +89,10 @@ TOOL_DEFINITIONS = [
                 "type": "object",
                 "properties": {
                     "url": {"type": "string", "description": "URL to fetch"},
-                    "max_chars": {"type": "integer", "description": "Maximum characters to return (default 8000)"},
+                    "max_chars": {
+                        "type": "integer",
+                        "description": "Maximum characters to return (default 8000)",
+                    },
                 },
                 "required": ["url"],
             },
@@ -111,7 +118,10 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "staged": {"type": "boolean", "description": "If true, show staged (cached) diff"}
+                    "staged": {
+                        "type": "boolean",
+                        "description": "If true, show staged (cached) diff",
+                    }
                 },
                 "required": [],
             },
@@ -125,7 +135,10 @@ TOOL_DEFINITIONS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "n": {"type": "integer", "description": "Number of commits to show (default 10)"}
+                    "n": {
+                        "type": "integer",
+                        "description": "Number of commits to show (default 10)",
+                    }
                 },
                 "required": [],
             },

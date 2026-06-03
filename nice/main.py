@@ -1,15 +1,16 @@
 import typer
+
 from nice.cli.ask import ask_command
 from nice.cli.chat import chat_command
 from nice.cli.code import code_command
 from nice.cli.commit import commit_command
+from nice.cli.config_cmd import config_app
 from nice.cli.explain import explain_command
 from nice.cli.fix import fix_command
 from nice.cli.plan import plan_command
 from nice.cli.review import review_command
 from nice.cli.test_cmd import test_command
 from nice.cli.version import version_command
-from nice.cli.config_cmd import config_app
 
 app = typer.Typer(
     name="nice",

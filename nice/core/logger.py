@@ -15,10 +15,12 @@ def setup_logging(level: str = "warning") -> None:
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    ))
+    file_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s [%(levelname)-8s] %(name)s — %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
 
     logger = logging.getLogger("nice")
     logger.setLevel(numeric)

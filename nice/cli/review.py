@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Optional
+
 import typer
-from nice.providers.registry import get_active_provider
+
+from nice.cli._spinner import console, stream_markdown
 from nice.config.context import inject_context
-from nice.tools.registry import TOOL_DEFINITIONS
-from nice.cli._spinner import stream_markdown, console
+from nice.providers.registry import get_active_provider
 
 SYSTEM_PROMPT = """You are a senior code reviewer. Analyse the provided code and give structured feedback.
 
@@ -23,9 +23,32 @@ Reply in the same language as the user's input."""
 
 # Extensions considered as source code
 CODE_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".go", ".rs", ".java", ".c", ".cpp",
-    ".cs", ".rb", ".php", ".swift", ".kt", ".vue", ".svelte", ".html", ".css",
-    ".scss", ".sql", ".sh", ".yaml", ".yml", ".toml", ".json",
+    ".py",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".c",
+    ".cpp",
+    ".cs",
+    ".rb",
+    ".php",
+    ".swift",
+    ".kt",
+    ".vue",
+    ".svelte",
+    ".html",
+    ".css",
+    ".scss",
+    ".sql",
+    ".sh",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".json",
 }
 
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".venv", "dist", "build", ".next"}

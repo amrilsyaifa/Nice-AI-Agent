@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Iterator
+from collections.abc import Iterator
+
 
 class BaseProvider(ABC):
-
     @abstractmethod
     async def chat(self, messages: list[dict]) -> str:
         pass

@@ -1,5 +1,7 @@
 """Shared slash-command handling for interactive sessions (chat, code)."""
+
 from pathlib import Path
+
 from nice.cli._spinner import console
 
 CHAT_HELP = """\

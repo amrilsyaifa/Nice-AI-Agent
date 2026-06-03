@@ -1,16 +1,17 @@
-import httpx
 import json
 import os
-from typing import Iterator
-from nice.providers.base import BaseProvider
+from collections.abc import Iterator
+
+import httpx
+
 from nice.config.settings import load_config
 from nice.core.logger import get_logger
+from nice.providers.base import BaseProvider
 
 log = get_logger("http_provider")
 
 
 class HttpProvider(BaseProvider):
-
     def __init__(self):
         self._last_usage: dict = {}
 
@@ -120,11 +121,13 @@ class HttpProvider(BaseProvider):
                 result = execute_tool(tool_name, tool_args)
                 print(f"✅ Result: {result[:100]}...")
 
-                updated.append({
-                    "role": "tool",
-                    "tool_call_id": tc["id"],
-                    "content": result,
-                })
+                updated.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc["id"],
+                        "content": result,
+                    }
+                )
 
             yield from self.chat_stream(updated, tools)
 
@@ -133,7 +136,9 @@ class HttpProvider(BaseProvider):
     def _load_credentials(self):
         config = load_config()
         api_key = config.api_key or os.getenv("OPENAI_API_KEY", "")
-        base_url = config.base_url or os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        base_url = config.base_url or os.getenv(
+            "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+        )
         if not api_key:
             raise ValueError("api_key is not set. Run: nice config set api_key <YOUR_KEY>")
         return config, api_key, base_url
@@ -201,10 +206,12 @@ class HttpProvider(BaseProvider):
             log.debug("tool_result: %s", result[:200])
             print(f"✅ Result: {result[:100]}...")
 
-            updated.append({
-                "role": "tool",
-                "tool_call_id": tc["id"],
-                "content": result,
-            })
+            updated.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tc["id"],
+                    "content": result,
+                }
+            )
 
         return self.chat_sync(updated, tools)

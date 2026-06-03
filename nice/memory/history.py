@@ -12,7 +12,6 @@ COMPRESS_KEEP = 8
 
 
 class ConversationHistory:
-
     def __init__(self, filename: str = None, session: str = None):
         if session:
             SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -74,9 +73,7 @@ class ConversationHistory:
         old = self.messages[:-COMPRESS_KEEP]
         recent = self.messages[-COMPRESS_KEEP:]
 
-        conversation_text = "\n".join(
-            f"{m['role'].upper()}: {m.get('content', '')}" for m in old
-        )
+        conversation_text = "\n".join(f"{m['role'].upper()}: {m.get('content', '')}" for m in old)
 
         summary_messages = [
             {
@@ -111,24 +108,28 @@ class ConversationHistory:
         default = HISTORY_DIR / "history.json"
         if default.exists():
             data = json.loads(default.read_text())
-            sessions.append({
-                "name": "default",
-                "messages": len(data),
-                "modified": datetime.fromtimestamp(default.stat().st_mtime),
-                "file": default,
-            })
+            sessions.append(
+                {
+                    "name": "default",
+                    "messages": len(data),
+                    "modified": datetime.fromtimestamp(default.stat().st_mtime),
+                    "file": default,
+                }
+            )
 
         # Named sessions
         if SESSIONS_DIR.exists():
             for f in sorted(SESSIONS_DIR.glob("*.json")):
                 try:
                     data = json.loads(f.read_text())
-                    sessions.append({
-                        "name": f.stem,
-                        "messages": len(data),
-                        "modified": datetime.fromtimestamp(f.stat().st_mtime),
-                        "file": f,
-                    })
+                    sessions.append(
+                        {
+                            "name": f.stem,
+                            "messages": len(data),
+                            "modified": datetime.fromtimestamp(f.stat().st_mtime),
+                            "file": f,
+                        }
+                    )
                 except Exception:
                     pass
 

@@ -1,7 +1,8 @@
 import typer
-from nice.providers.registry import get_active_provider
-from nice.tools.registry import execute_tool, TOOL_DEFINITIONS
+
 from nice.config.context import inject_context
+from nice.providers.registry import get_active_provider
+from nice.tools.registry import TOOL_DEFINITIONS, execute_tool
 
 MAX_RETRY = 3
 
@@ -27,7 +28,7 @@ def test_command(
     system = inject_context(SYSTEM_PROMPT)
 
     for attempt in range(1, MAX_RETRY + 1):
-        typer.echo(f"\n{'='*50}")
+        typer.echo(f"\n{'=' * 50}")
         typer.echo(f"Attempt {attempt}/{MAX_RETRY}: {command}")
         typer.echo("=" * 50)
 
@@ -46,7 +47,9 @@ def test_command(
         if attempt == MAX_RETRY:
             break
 
-        typer.echo(f"\nTest failures detected. Asking AI to fix (attempt {attempt}/{MAX_RETRY - 1})...")
+        typer.echo(
+            f"\nTest failures detected. Asking AI to fix (attempt {attempt}/{MAX_RETRY - 1})..."
+        )
 
         messages = [
             {"role": "system", "content": system},

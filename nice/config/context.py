@@ -2,6 +2,7 @@ from pathlib import Path
 
 CONTEXT_FILE = ".nice.md"
 
+
 def load_project_context() -> str | None:
     """Read .nice.md from the current working directory. Returns content or None."""
     path = Path.cwd() / CONTEXT_FILE

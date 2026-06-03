@@ -1,6 +1,6 @@
-from nice.providers.registry import get_active_provider
-from nice.tools.registry import execute_tool, TOOL_DEFINITIONS
 from nice.config.context import inject_context
+from nice.providers.registry import get_active_provider
+from nice.tools.registry import TOOL_DEFINITIONS, execute_tool
 
 MAX_RETRY = 3
 
@@ -17,6 +17,7 @@ Your workflow:
 
 Reply in the same language as the user's input."""
 
+
 def run_with_reflection(command: str, context_file: str = None) -> dict:
     """
     Run a command; if it errors, reflect and auto-fix, then retry.
@@ -26,18 +27,18 @@ def run_with_reflection(command: str, context_file: str = None) -> dict:
     attempts = []
 
     for attempt in range(1, MAX_RETRY + 1):
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Attempt {attempt}/{MAX_RETRY}: {command}")
-        print('='*50)
+        print("=" * 50)
 
         result = execute_tool("run_command", {"command": command})
         attempts.append({"attempt": attempt, "output": result})
 
         is_error = (
-            "error" in result.lower() or
-            "traceback" in result.lower() or
-            "exception" in result.lower() or
-            "stderr" in result.lower()
+            "error" in result.lower()
+            or "traceback" in result.lower()
+            or "exception" in result.lower()
+            or "stderr" in result.lower()
         )
 
         if not is_error:
@@ -57,7 +58,9 @@ Output/Error:
 Contents of `{context_file}`:
 {file_content}"""
 
-        error_context += "\nAnalyse this error and fix the problematic file, then re-run the command."
+        error_context += (
+            "\nAnalyse this error and fix the problematic file, then re-run the command."
+        )
 
         messages = [
             {"role": "system", "content": inject_context(REFLECTION_PROMPT)},
@@ -67,8 +70,4 @@ Contents of `{context_file}`:
         provider.chat_sync(messages, tools=TOOL_DEFINITIONS)
 
     print(f"\nFailed after {MAX_RETRY} attempts. Manual intervention needed.")
-    return {
-        "success": False,
-        "output": attempts[-1]["output"],
-        "attempts": attempts
-    }
+    return {"success": False, "output": attempts[-1]["output"], "attempts": attempts}

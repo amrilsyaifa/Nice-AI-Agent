@@ -1,9 +1,11 @@
 import difflib
 import os
 from pathlib import Path
+
 from rich.console import Console
 
 console = Console()
+
 
 def read_file(path: str) -> str:
     try:
@@ -24,12 +26,14 @@ def write_file(path: str, content: str) -> str:
         if current == content:
             return f"No changes to '{path}'."
 
-        diff = list(difflib.unified_diff(
-            current.splitlines(keepends=True),
-            content.splitlines(keepends=True),
-            fromfile=f"{path}  (current)",
-            tofile=f"{path}  (proposed)",
-        ))
+        diff = list(
+            difflib.unified_diff(
+                current.splitlines(keepends=True),
+                content.splitlines(keepends=True),
+                fromfile=f"{path}  (current)",
+                tofile=f"{path}  (proposed)",
+            )
+        )
 
         console.print(f"\n[bold]Diff preview:[/bold] [cyan]{path}[/cyan]")
         for line in diff:
@@ -47,7 +51,7 @@ def write_file(path: str, content: str) -> str:
 
     else:
         lines = content.splitlines()
-        preview = "\n".join(f"+ {l}" for l in lines[:20])
+        preview = "\n".join(f"+ {line}" for line in lines[:20])
         if len(lines) > 20:
             preview += f"\n... ({len(lines) - 20} more lines)"
 

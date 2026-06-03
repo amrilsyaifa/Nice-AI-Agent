@@ -1,12 +1,12 @@
-from typing import Optional
 import typer
-from nice.config.settings import load_config, save_config
+
+from nice.cli._slash import CODE_HELP, load_context_file, print_usage_inline, show_usage
+from nice.cli._spinner import console, stream_markdown, stream_quiet
 from nice.config.context import inject_context
+from nice.config.settings import load_config, save_config
+from nice.memory.history import ConversationHistory
 from nice.providers.registry import get_active_provider
 from nice.tools.registry import TOOL_DEFINITIONS
-from nice.memory.history import ConversationHistory
-from nice.cli._spinner import stream_markdown, stream_quiet, console
-from nice.cli._slash import CODE_HELP, show_usage, print_usage_inline, load_context_file
 
 SYSTEM_PROMPT = """You are an AI engineer named Nice.
 You can read, write, and run commands on the user's computer.
@@ -16,9 +16,11 @@ Reply in the same language as the user's input."""
 
 
 def code_command(
-    task: Optional[str] = typer.Argument(None, help="Coding task. Leave empty for interactive mode."),
+    task: str | None = typer.Argument(None, help="Coding task. Leave empty for interactive mode."),
     clear: bool = typer.Option(False, "--clear", help="Clear code session history."),
-    quiet: bool = typer.Option(False, "--quiet", "-q", help="Plain output — no markdown, no decorations."),
+    quiet: bool = typer.Option(
+        False, "--quiet", "-q", help="Plain output — no markdown, no decorations."
+    ),
 ):
     """Execute a coding task with tools. No argument = interactive mode."""
     config = load_config()

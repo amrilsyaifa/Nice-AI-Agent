@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
+
 from pydantic import BaseModel
 
 CONFIG_DIR = Path.home() / ".nice"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+
 
 class NiceConfig(BaseModel):
     provider: str = "openai"
@@ -16,12 +18,14 @@ class NiceConfig(BaseModel):
     confirm_commands: bool = False
     log_level: str = "warning"
 
+
 def load_config() -> NiceConfig:
     if not CONFIG_FILE.exists():
         return NiceConfig()
     with open(CONFIG_FILE) as f:
         data = json.load(f)
     return NiceConfig(**data)
+
 
 def save_config(config: NiceConfig):
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)

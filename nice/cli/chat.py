@@ -1,21 +1,24 @@
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
+
 import typer
-from nice.providers.registry import get_active_provider
-from nice.config.settings import load_config, save_config
+
+from nice.cli._slash import CHAT_HELP, load_context_file, print_usage_inline, show_usage
+from nice.cli._spinner import console, run_with_spinner, stream_markdown
 from nice.config.context import inject_context
+from nice.config.settings import load_config, save_config
 from nice.memory.history import ConversationHistory
-from nice.cli._spinner import run_with_spinner, stream_markdown, console
-from nice.cli._slash import CHAT_HELP, show_usage, print_usage_inline, load_context_file
+from nice.providers.registry import get_active_provider
 
 SYSTEM_PROMPT = "You are a helpful AI assistant named Nice. Reply in the same language as the user's input. You remember the context of previous messages."
 
 
 def chat_command(
-    session: Optional[str] = typer.Option(None, "--session", "-s", help="Named session to use or create."),
+    session: str | None = typer.Option(
+        None, "--session", "-s", help="Named session to use or create."
+    ),
     list_sessions: bool = typer.Option(False, "--list", "-l", help="List all sessions."),
-    delete: Optional[str] = typer.Option(None, "--delete", help="Delete a session by name."),
+    delete: str | None = typer.Option(None, "--delete", help="Delete a session by name."),
     export: bool = typer.Option(False, "--export", "-e", help="Export session to Markdown."),
     export_json: bool = typer.Option(False, "--export-json", help="Export session to JSON."),
 ):

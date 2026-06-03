@@ -1,7 +1,7 @@
 import os
-from typing import Iterator
-from nice.providers.http_provider import HttpProvider
+
 from nice.config.settings import load_config
+from nice.providers.http_provider import HttpProvider
 
 
 class OllamaProvider(HttpProvider):

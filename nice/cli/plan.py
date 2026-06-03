@@ -1,15 +1,19 @@
 import os
 import sys
-from typing import Optional
+
 import typer
-from nice.planner.planner import create_plan
-from nice.planner.executor import execute_plan
+
+from nice.cli._spinner import console, run_with_spinner
 from nice.config.context import load_project_context
-from nice.cli._spinner import run_with_spinner, console
+from nice.planner.executor import execute_plan
+from nice.planner.planner import create_plan
+
 
 def plan_command(
-    goal: Optional[str] = typer.Argument(None, help="Goal to achieve"),
-    execute: bool = typer.Option(False, "--execute", "-e", help="Execute immediately without confirmation"),
+    goal: str | None = typer.Argument(None, help="Goal to achieve"),
+    execute: bool = typer.Option(
+        False, "--execute", "-e", help="Execute immediately without confirmation"
+    ),
 ):
     """Create an execution plan with a feedback loop, then execute it."""
 

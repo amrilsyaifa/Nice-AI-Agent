@@ -1,6 +1,7 @@
 import json
-from nice.providers.registry import get_active_provider
+
 from nice.planner.plan import ExecutionPlan
+from nice.providers.registry import get_active_provider
 
 PLANNER_PROMPT = """You are an AI engineer that creates execution plans.
 
@@ -21,7 +22,10 @@ Rules:
 - No explanations outside the JSON
 - Response ONLY JSON, no other text"""
 
-def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = None, project_context: str = None) -> ExecutionPlan:
+
+def create_plan(
+    goal: str, feedback: str = None, previous_steps: list[str] = None, project_context: str = None
+) -> ExecutionPlan:
     """Ask the LLM to break down a goal into steps."""
     provider = get_active_provider()
 
@@ -31,13 +35,10 @@ def create_plan(goal: str, feedback: str = None, previous_steps: list[str] = Non
 
     content = f"Create a plan for: {goal}"
     if feedback and previous_steps:
-        steps_str = "\n".join(f"{i+1}. {s}" for i, s in enumerate(previous_steps))
+        steps_str = "\n".join(f"{i + 1}. {s}" for i, s in enumerate(previous_steps))
         content += f"\n\nPrevious plan:\n{steps_str}\n\nUser feedback: {feedback}\n\nCreate a revised plan."
 
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user", "content": content}
-    ]
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": content}]
 
     response = provider.chat_sync(messages)
 

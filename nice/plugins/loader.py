@@ -6,8 +6,10 @@ Each plugin file can expose:
   TOOL_FUNCTIONS    dict[str, callable] — name → function
   COMMANDS          dict[str, callable] — name → typer command function
 """
+
 import importlib.util
 from pathlib import Path
+
 from nice.core.logger import get_logger
 
 PLUGINS_DIR = Path.home() / ".nice" / "plugins"

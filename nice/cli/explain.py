@@ -1,7 +1,8 @@
 import typer
-from nice.providers.registry import get_active_provider
+
+from nice.cli._spinner import console, stream_markdown
 from nice.config.context import inject_context
-from nice.cli._spinner import stream_markdown, console
+from nice.providers.registry import get_active_provider
 
 SYSTEM_PROMPT = """You are a code explainer. Explain the provided code clearly.
 
@@ -30,6 +31,7 @@ def explain_command(
             path_str, focus_line = parts[0], int(parts[1])
 
     from pathlib import Path
+
     file_path = Path(path_str)
 
     if not file_path.exists():
@@ -46,13 +48,11 @@ def explain_command(
         # Show ±40 lines around the focus line
         start = max(0, focus_line - 41)
         end = min(len(lines), focus_line + 40)
-        snippet = "\n".join(
-            f"{i + start + 1:4}  {l}" for i, l in enumerate(lines[start:end])
-        )
+        snippet = "\n".join(f"{i + start + 1:4}  {line}" for i, line in enumerate(lines[start:end]))
         label = f"{path_str} (lines {start + 1}–{end})"
         user_msg = f"Explain this section of `{label}`:\n\n```\n{snippet}\n```"
     else:
-        content = "\n".join(f"{i + 1:4}  {l}" for i, l in enumerate(lines))
+        content = "\n".join(f"{i + 1:4}  {line}" for i, line in enumerate(lines))
         user_msg = f"Explain `{path_str}`:\n\n```\n{content}\n```"
 
     typer.echo(f"Explaining {target}...\n")

@@ -1,7 +1,9 @@
 import subprocess
+
 import typer
+
+from nice.cli._spinner import console, run_with_spinner
 from nice.providers.registry import get_active_provider
-from nice.cli._spinner import run_with_spinner, console
 
 SYSTEM_PROMPT = """You are a git commit message writer.
 
@@ -21,7 +23,9 @@ def _run(cmd: str) -> tuple[str, int]:
 
 
 def commit_command(
-    all: bool = typer.Option(False, "--all", "-a", help="Stage all tracked changes before committing"),
+    all: bool = typer.Option(
+        False, "--all", "-a", help="Stage all tracked changes before committing"
+    ),
 ):
     """Generate a commit message from staged changes and commit."""
 
@@ -69,7 +73,7 @@ def commit_command(
     if choice == "e":
         proposed = typer.prompt("Commit message", default=proposed)
 
-    _, code = _run(f'git commit -m {_quote(proposed)}')
+    _, code = _run(f"git commit -m {_quote(proposed)}")
     if code == 0:
         console.print("[green]Committed.[/green]")
     else:

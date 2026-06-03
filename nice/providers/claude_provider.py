@@ -1,9 +1,11 @@
-import httpx
 import json
 import os
-from typing import Iterator
-from nice.providers.base import BaseProvider
+from collections.abc import Iterator
+
+import httpx
+
 from nice.config.settings import load_config
+from nice.providers.base import BaseProvider
 
 
 def _to_claude_tools(openai_tools: list) -> list:
@@ -11,11 +13,13 @@ def _to_claude_tools(openai_tools: list) -> list:
     result = []
     for t in openai_tools or []:
         fn = t.get("function", {})
-        result.append({
-            "name": fn["name"],
-            "description": fn.get("description", ""),
-            "input_schema": fn.get("parameters", {"type": "object", "properties": {}}),
-        })
+        result.append(
+            {
+                "name": fn["name"],
+                "description": fn.get("description", ""),
+                "input_schema": fn.get("parameters", {"type": "object", "properties": {}}),
+            }
+        )
     return result
 
 
@@ -32,7 +36,6 @@ def _split_system(messages: list[dict]) -> tuple[str, list[dict]]:
 
 
 class ClaudeProvider(BaseProvider):
-
     ANTHROPIC_VERSION = "2023-06-01"
     BASE_URL = "https://api.anthropic.com/v1"
 
@@ -162,12 +165,14 @@ class ClaudeProvider(BaseProvider):
                     args = json.loads(b.get("_args_raw", "{}"))
                 except json.JSONDecodeError:
                     args = {}
-                assistant_content.append({
-                    "type": "tool_use",
-                    "id": b["id"],
-                    "name": b["name"],
-                    "input": args,
-                })
+                assistant_content.append(
+                    {
+                        "type": "tool_use",
+                        "id": b["id"],
+                        "name": b["name"],
+                        "input": args,
+                    }
+                )
 
             updated = msgs + [{"role": "assistant", "content": assistant_content}]
 
@@ -181,16 +186,20 @@ class ClaudeProvider(BaseProvider):
                 print(f"\n🔧 Running tool: {b['name']}({args})")
                 result = execute_tool(b["name"], args)
                 print(f"✅ Result: {result[:100]}...")
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": b["id"],
-                    "content": result,
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": b["id"],
+                        "content": result,
+                    }
+                )
 
             updated.append({"role": "user", "content": tool_results})
 
             # Rebuild full message list with system
-            full_messages = messages[:1] + [{"role": m["role"], "content": m["content"]} for m in updated]
+            full_messages = messages[:1] + [
+                {"role": m["role"], "content": m["content"]} for m in updated
+            ]
             yield from self.chat_stream(full_messages, tools)
 
     # ------------------------------------------------------------------ #
@@ -199,7 +208,9 @@ class ClaudeProvider(BaseProvider):
         config = load_config()
         api_key = config.api_key or os.getenv("ANTHROPIC_API_KEY", "")
         if not api_key:
-            raise ValueError("api_key is not set. Run: nice config set api_key <YOUR_ANTHROPIC_KEY>")
+            raise ValueError(
+                "api_key is not set. Run: nice config set api_key <YOUR_ANTHROPIC_KEY>"
+            )
         return config, api_key
 
     def _headers(self, api_key: str) -> dict:
@@ -211,7 +222,9 @@ class ClaudeProvider(BaseProvider):
 
     def _raise_for_status(self, status_code: int, body: str = ""):
         if status_code == 401:
-            raise RuntimeError("Invalid Anthropic API key. Update with: nice config set api_key <KEY>")
+            raise RuntimeError(
+                "Invalid Anthropic API key. Update with: nice config set api_key <KEY>"
+            )
         if status_code == 429:
             raise RuntimeError("Anthropic rate limit reached. Wait a moment and try again.")
         if status_code == 402:
@@ -239,11 +252,13 @@ class ClaudeProvider(BaseProvider):
             print(f"\n🔧 Running tool: {tu['name']}({args})")
             result = execute_tool(tu["name"], args)
             print(f"✅ Result: {result[:100]}...")
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tu["id"],
-                "content": result,
-            })
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tu["id"],
+                    "content": result,
+                }
+            )
 
         updated.append({"role": "user", "content": tool_results})
 
