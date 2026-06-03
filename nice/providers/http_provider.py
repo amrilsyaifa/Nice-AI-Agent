@@ -8,6 +8,9 @@ from nice.config.settings import load_config
 
 class HttpProvider(BaseProvider):
 
+    def __init__(self):
+        self._last_usage: dict = {}
+
     def name(self) -> str:
         return "openai"
 
@@ -25,6 +28,7 @@ class HttpProvider(BaseProvider):
             "model": config.model,
             "messages": messages,
             "stream": True,
+            "stream_options": {"include_usage": True},
         }
         if tools:
             payload["tools"] = tools
@@ -58,6 +62,12 @@ class HttpProvider(BaseProvider):
                         except json.JSONDecodeError:
                             continue
 
+                        # Capture usage when provider includes it
+                        if chunk.get("usage"):
+                            self._last_usage = chunk["usage"]
+
+                        if not chunk.get("choices"):
+                            continue
                         delta = chunk["choices"][0].get("delta", {})
 
                         # Stream text content
@@ -163,6 +173,8 @@ class HttpProvider(BaseProvider):
         self._raise_for_status(response.status_code)
 
         data = response.json()
+        if data.get("usage"):
+            self._last_usage = data["usage"]
         message = data["choices"][0]["message"]
 
         if "tool_calls" in message:

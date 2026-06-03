@@ -1,16 +1,18 @@
-import subprocess
 import os
+import subprocess
 
-def run_command(command: str, timeout: int = 60) -> str:
-    """Jalankan shell command dan return outputnya."""
 
-    # Blocklist command yang berbahaya
+def run_command(command: str, timeout: int = None) -> str:
+    """Execute a shell command and return its output."""
     BLOCKED = ["rm -rf", "DROP TABLE", "mkfs", "dd if=", ":(){:|:&};:"]
-
     for blocked in BLOCKED:
         if blocked in command:
-            return f"❌ Command '{command}' diblokir karena berbahaya"
-        
+            return f"Error: Command blocked for safety: '{blocked}'"
+
+    if timeout is None:
+        from nice.config.settings import load_config
+        timeout = load_config().command_timeout
+
     try:
         result = subprocess.run(
             command,
@@ -21,15 +23,11 @@ def run_command(command: str, timeout: int = 60) -> str:
             stdin=subprocess.DEVNULL,
             env={**os.environ, "CI": "true", "NO_COLOR": "1"},
         )
-        output = ""
-        if result.stdout:
-             output += result.stdout
+        output = result.stdout
         if result.stderr:
             output += f"\nSTDERR: {result.stderr}"
-        if not output:
-            output = "(tidak ada output)"
-        return output
+        return output.strip() or "(no output)"
     except subprocess.TimeoutExpired:
-        return f"❌ Command timeout setelah {timeout} detik"
+        return f"Error: Command timed out after {timeout}s."
     except Exception as e:
-        return f"❌ Error: {e}"
+        return f"Error: {e}"

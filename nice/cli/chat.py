@@ -7,6 +7,7 @@ from nice.config.settings import load_config, save_config
 from nice.config.context import inject_context
 from nice.memory.history import ConversationHistory
 from nice.cli._spinner import run_with_spinner, stream_markdown, console
+from nice.cli._slash import CHAT_HELP, show_usage, print_usage_inline, load_context_file
 
 SYSTEM_PROMPT = "You are a helpful AI assistant named Nice. Reply in the same language as the user's input. You remember the context of previous messages."
 
@@ -20,7 +21,6 @@ def chat_command(
 ):
     """Interactive chat with AI. Type 'exit' to quit, 'clear' to reset history."""
 
-    # ── --list ────────────────────────────────────────────────────────
     if list_sessions:
         sessions = ConversationHistory.list_sessions()
         if not sessions:
@@ -33,20 +33,16 @@ def chat_command(
             typer.echo(f"{s['name']:<20} {s['messages']:>8}  {ts}")
         return
 
-    # ── --delete ──────────────────────────────────────────────────────
     if delete:
-        confirm = typer.confirm(f"Delete session '{delete}'?")
-        if confirm:
+        if typer.confirm(f"Delete session '{delete}'?"):
             ok = ConversationHistory.delete_session(delete)
             typer.echo("Deleted." if ok else f"Session '{delete}' not found.")
         else:
             typer.echo("Cancelled.")
         return
 
-    # ── load session ──────────────────────────────────────────────────
     history = ConversationHistory(session=session)
 
-    # ── --export ──────────────────────────────────────────────────────
     if export or export_json:
         if history.is_empty():
             typer.echo("Session is empty, nothing to export.")
@@ -63,13 +59,12 @@ def chat_command(
         typer.echo(f"Exported to {filename}")
         return
 
-    # ── interactive session ───────────────────────────────────────────
     config = load_config()
     provider = get_active_provider()
     session_label = session or "default"
 
     typer.echo(f"Nice Chat [{config.provider} / {config.model}]  session: {session_label}")
-    typer.echo("Commands: exit · clear · /model <name>")
+    typer.echo("Type /help for available commands.")
     typer.echo("-" * 50)
 
     if not history.is_empty():
@@ -82,17 +77,27 @@ def chat_command(
             typer.echo("\nGoodbye!")
             break
 
-        if user_input.lower() == "exit":
+        cmd = user_input.strip().lower()
+
+        if cmd == "exit":
             typer.echo("Goodbye!")
             break
 
-        if user_input.lower() == "clear":
+        if cmd == "clear":
             history.clear()
             typer.echo("History cleared.")
             continue
 
-        if user_input.lower().startswith("/model "):
-            new_model = user_input[7:].strip()
+        if cmd == "/help":
+            console.print(CHAT_HELP)
+            continue
+
+        if cmd == "/usage":
+            show_usage(provider)
+            continue
+
+        if cmd.startswith("/model"):
+            new_model = user_input[6:].strip()
             if new_model:
                 config = load_config()
                 config.model = new_model
@@ -102,17 +107,30 @@ def chat_command(
                 console.print(f"[dim]Current model:[/dim] {config.model}")
             continue
 
+        if cmd.startswith("/context"):
+            path_str = user_input[8:].strip()
+            if not path_str:
+                console.print("[yellow]Usage: /context <file>[/yellow]")
+                continue
+            content, err = load_context_file(path_str)
+            if err:
+                console.print(f"[red]Error:[/red] {err}")
+                continue
+            history.add("user", f"[Context from {path_str}]\n{content}")
+            history.add("assistant", f"Understood, I've loaded the context from `{path_str}`.")
+            console.print(f"[green]Context loaded from {path_str}[/green]")
+            continue
+
         if not user_input.strip():
             continue
 
-        # Auto-compress if context is getting long
         if history.should_compress():
             console.print("[dim]Compressing conversation history…[/dim]")
             _, err = run_with_spinner(lambda: history.compress(provider))
             if err:
                 console.print(f"[yellow]Compression failed:[/yellow] {err}")
             else:
-                console.print(f"[dim]History compressed to {len(history.messages)} messages.[/dim]")
+                console.print(f"[dim]Compressed to {len(history.messages)} messages.[/dim]")
 
         history.add("user", user_input)
         messages = history.get_messages(inject_context(SYSTEM_PROMPT))
@@ -128,6 +146,10 @@ def chat_command(
             console.print(f"[red]Error:[/red] {err}")
             history.messages.pop()
             continue
+
+        config = load_config()
+        if config.show_usage:
+            print_usage_inline(provider)
 
         history.add("assistant", response)
         typer.echo("-" * 50)

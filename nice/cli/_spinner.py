@@ -78,6 +78,21 @@ def run_with_spinner(fn) -> tuple:
     return result[0], error[0]
 
 
+def stream_quiet(provider, messages: list, tools: list = None) -> tuple[str, Exception | None]:
+    """Stream response as plain text — no decorations, suitable for scripting."""
+    full = ""
+    try:
+        for chunk in provider.chat_stream(messages, tools=tools):
+            print(chunk, end="", flush=True)
+            full += chunk
+        print()
+        return full, None
+    except KeyboardInterrupt:
+        return full, KeyboardInterrupt("Cancelled.")
+    except Exception as e:
+        return full, e
+
+
 def stream_markdown(provider, messages: list, tools: list = None) -> tuple[str, Exception | None]:
     """
     Stream provider response with live Markdown rendering.
