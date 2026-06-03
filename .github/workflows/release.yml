@@ -48,8 +48,17 @@ jobs:
       - name: Install with dev extras
         run: uv sync --extra dev
 
+      - name: Cache PyInstaller
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/
+            ~/.pyinstaller
+          key: pyinstaller-${{ matrix.os }}-${{ hashFiles('nice.spec', 'pyproject.toml', 'uv.lock') }}
+          restore-keys: pyinstaller-${{ matrix.os }}-
+
       - name: Build binary (PyInstaller)
-        run: uv run pyinstaller nice.spec --clean --noconfirm
+        run: uv run pyinstaller nice.spec --noconfirm
 
       - name: Package binary
         shell: bash

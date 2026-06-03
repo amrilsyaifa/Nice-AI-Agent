@@ -26,7 +26,18 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["tkinter", "unittest", "test", "tests"],
+    excludes=[
+        "tkinter", "turtle", "curses",
+        "unittest", "test", "tests",
+        "email", "html.parser", "http.server",
+        "xmlrpc", "xml.etree",
+        "multiprocessing",
+        "numpy", "pandas", "scipy", "matplotlib", "PIL",
+        "setuptools", "pkg_resources",
+        "IPython", "jupyter",
+        "sqlite3",
+        "ssl",  # httpx bundles its own
+    ],
     noarchive=False,
 )
 
