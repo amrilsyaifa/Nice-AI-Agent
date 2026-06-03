@@ -4,31 +4,37 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
 
 permissions:
-  contents: write   # needed to create GitHub Releases
-  id-token: write   # needed for PyPI trusted publishing
+  contents: write
+  id-token: write
 
 jobs:
   # ── 1. Build standalone binaries ──────────────────────────────────────────
   build:
-    name: Build binary (${{ matrix.artifact }})
+    name: Build — ${{ matrix.artifact }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest      # Apple Silicon (M-series)
+          - os: macos-latest       # Apple Silicon (M-series)
             artifact: nice-macos-arm64
-            binary: nice
-          - os: macos-13          # Intel Mac
+            exe: nice
+          - os: macos-13           # Intel Mac
             artifact: nice-macos-x86_64
-            binary: nice
+            exe: nice
           - os: ubuntu-latest
             artifact: nice-linux-x86_64
-            binary: nice
+            exe: nice
           - os: windows-latest
             artifact: nice-windows-x86_64
-            binary: nice.exe
+            exe: nice.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -39,25 +45,33 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install with dev dependencies
+      - name: Install with dev extras
         run: uv sync --extra dev
 
-      - name: Build binary
-        run: uv run pyinstaller nice.spec --clean
+      - name: Build binary (PyInstaller)
+        run: uv run pyinstaller nice.spec --clean --noconfirm
 
-      - name: Rename binary
+      - name: Package binary
         shell: bash
         run: |
-          mkdir -p dist/out
-          mv dist/${{ matrix.binary }} dist/out/${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          mkdir -p dist/release
+          SRC="dist/${{ matrix.exe }}"
+          # Windows produces .exe; others no extension
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp "dist/${{ matrix.exe }}" "dist/release/${{ matrix.artifact }}.exe"
+          else
+            cp "dist/${{ matrix.exe }}" "dist/release/${{ matrix.artifact }}"
+            chmod +x "dist/release/${{ matrix.artifact }}"
+          fi
+          ls -lh dist/release/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: dist/out/
+          path: dist/release/
 
-  # ── 2. Create GitHub Release and attach binaries ──────────────────────────
+  # ── 2. Create GitHub Release ───────────────────────────────────────────────
   release:
     name: GitHub Release
     needs: build
@@ -65,24 +79,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # full history for changelog
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist/out
+          path: dist/release
           merge-multiple: true
 
-      - name: List binaries
-        run: ls -lh dist/out/
+      - name: List release assets
+        run: ls -lh dist/release/
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "name=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.name }}
           generate_release_notes: true
-          files: dist/out/*
+          files: |
+            dist/release/*
+            scripts/install.sh
+            scripts/install.ps1
 
   # ── 3. Publish to PyPI ────────────────────────────────────────────────────
   pypi:

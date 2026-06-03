@@ -15,33 +15,48 @@ Your autonomous CLI AI engineer. Ask questions, run interactive chats, execute c
 
 ## Requirements
 
-- Python >= 3.13
-- [uv](https://github.com/astral-sh/uv)
 - An API key for [OpenRouter](https://openrouter.ai) or any OpenAI-compatible endpoint
 
 ## Installation
 
-```bash
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
+### Option 1 — Standalone binary (recommended, no Python needed)
 
-# Clone and sync
-git clone <repo-url>
-cd nice
+**macOS / Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/amrilsyaifa/Nice-AI-Agent/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr https://raw.githubusercontent.com/amrilsyaifa/Nice-AI-Agent/main/scripts/install.ps1 | iex
+```
+
+Or download the binary directly from [Releases](https://github.com/amrilsyaifa/Nice-AI-Agent/releases/latest):
+
+| Platform | File |
+|----------|------|
+| macOS Apple Silicon | `nice-macos-arm64` |
+| macOS Intel | `nice-macos-x86_64` |
+| Linux x86_64 | `nice-linux-x86_64` |
+| Windows x86_64 | `nice-windows-x86_64.exe` |
+
+### Option 2 — pip / uv (requires Python >= 3.13)
+
+```bash
+pip install nice-ai
+# or
+uv tool install nice-ai
+# or
+pipx install nice-ai
+```
+
+### Option 3 — from source
+
+```bash
+git clone https://github.com/amrilsyaifa/Nice-AI-Agent.git
+cd Nice-AI-Agent
 uv sync
-```
-
-Run without installing globally:
-
-```bash
-uv run nice ask "What is recursion?"
-```
-
-Install globally (available everywhere):
-
-```bash
 uv tool install .
-uv tool uninstall nice   # to remove
 ```
 
 ## Configuration
