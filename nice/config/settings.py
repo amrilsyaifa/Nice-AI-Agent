@@ -12,6 +12,8 @@ class NiceConfig(BaseModel):
     base_url: str = "https://openrouter.ai/api/v1"
     show_usage: bool = False
     command_timeout: int = 60
+    blocked_commands: list[str] = []
+    confirm_commands: bool = False
 
 def load_config() -> NiceConfig:
     if not CONFIG_FILE.exists():

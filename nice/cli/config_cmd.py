@@ -3,26 +3,40 @@ from nice.config.settings import load_config, save_config
 
 config_app = typer.Typer(help="Manage Nice configuration.")
 
-VALID_KEYS = ("provider", "model", "api_key", "base_url", "show_usage", "command_timeout")
+VALID_KEYS = (
+    "provider", "model", "api_key", "base_url",
+    "show_usage", "command_timeout",
+    "blocked_commands", "confirm_commands",
+)
+
+BOOL_KEYS = ("show_usage", "confirm_commands")
+INT_KEYS  = ("command_timeout",)
+LIST_KEYS = ("blocked_commands",)
 
 
 @config_app.command("set")
 def config_set(key: str, value: str):
-    """Set a config value. Example: nice config set model gpt-4o"""
+    """Set a config value. Example: nice config set model gpt-4o
+
+    For blocked_commands pass a comma-separated list:
+      nice config set blocked_commands "sudo rm,git push --force"
+    """
     if key not in VALID_KEYS:
         typer.echo(f"Unknown key '{key}'. Available: {', '.join(VALID_KEYS)}")
         raise typer.Exit(1)
 
     config = load_config()
 
-    if key == "show_usage":
-        config.show_usage = value.lower() in ("true", "1", "yes")
-    elif key == "command_timeout":
+    if key in BOOL_KEYS:
+        setattr(config, key, value.lower() in ("true", "1", "yes"))
+    elif key in INT_KEYS:
         try:
-            config.command_timeout = int(value)
+            setattr(config, key, int(value))
         except ValueError:
-            typer.echo("command_timeout must be an integer (seconds).")
+            typer.echo(f"'{key}' must be an integer.")
             raise typer.Exit(1)
+    elif key in LIST_KEYS:
+        setattr(config, key, [s.strip() for s in value.split(",") if s.strip()])
     else:
         setattr(config, key, value)
 
@@ -44,9 +58,12 @@ def config_get(key: str):
 def config_list():
     """Show all config values."""
     config = load_config()
-    typer.echo(f"provider         = {config.provider}")
-    typer.echo(f"model            = {config.model}")
-    typer.echo(f"api_key          = {config.api_key[:8]}..." if config.api_key else "api_key          = (not set)")
-    typer.echo(f"base_url         = {config.base_url}")
-    typer.echo(f"show_usage       = {config.show_usage}")
-    typer.echo(f"command_timeout  = {config.command_timeout}s")
+    typer.echo(f"provider          = {config.provider}")
+    typer.echo(f"model             = {config.model}")
+    typer.echo(f"api_key           = {config.api_key[:8]}..." if config.api_key else "api_key           = (not set)")
+    typer.echo(f"base_url          = {config.base_url}")
+    typer.echo(f"show_usage        = {config.show_usage}")
+    typer.echo(f"command_timeout   = {config.command_timeout}s")
+    typer.echo(f"confirm_commands  = {config.confirm_commands}")
+    blocked = ", ".join(config.blocked_commands) if config.blocked_commands else "(none)"
+    typer.echo(f"blocked_commands  = {blocked}")
