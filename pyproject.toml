@@ -1,5 +1,5 @@
 [project]
-name = "nice-ai"
+name = "nice-agent"
 version = "0.1.0"
 description = "Your autonomous CLI AI engineer"
 readme = "README.md"

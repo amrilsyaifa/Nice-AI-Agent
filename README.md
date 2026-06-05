@@ -43,11 +43,11 @@ Or download the binary directly from [Releases](https://github.com/amrilsyaifa/N
 ### Option 2 — pip / uv (requires Python >= 3.13)
 
 ```bash
-pip install nice-ai
+pip install nice-agent
 # or
-uv tool install nice-ai
+uv tool install nice-agent
 # or
-pipx install nice-ai
+pipx install nice-agent
 ```
 
 ### Option 3 — from source
@@ -57,6 +57,93 @@ git clone https://github.com/amrilsyaifa/Nice-AI-Agent.git
 cd Nice-AI-Agent
 uv sync
 uv tool install .
+```
+
+---
+
+## Development — Build & Run Locally
+
+### Prerequisites
+
+- Python >= 3.13
+- [uv](https://github.com/astral-sh/uv) — `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+### 1. Clone and install dependencies
+
+```bash
+git clone https://github.com/amrilsyaifa/Nice-AI-Agent.git
+cd Nice-AI-Agent
+uv sync
+```
+
+### 2. Run directly (no install needed)
+
+```bash
+uv run nice --help
+uv run nice version
+uv run nice ask "What is 2 + 2?"
+```
+
+### 3. Install into virtualenv (activate once, use everywhere in the project)
+
+```bash
+uv pip install -e .
+source .venv/bin/activate   # macOS/Linux
+# or
+.venv\Scripts\activate      # Windows
+
+nice --help
+nice version
+```
+
+### 4. Install globally (available from any directory)
+
+```bash
+uv tool install .
+
+nice --help   # works anywhere
+```
+
+Uninstall: `uv tool uninstall nice`
+
+### 5. Build standalone binary (no Python needed on target machine)
+
+Install dev dependencies first:
+
+```bash
+uv sync --extra dev
+```
+
+Build:
+
+```bash
+uv run pyinstaller nice.spec --noconfirm
+```
+
+The binary is output to `dist/nice` (or `dist/nice.exe` on Windows). Run it directly:
+
+```bash
+./dist/nice --help
+./dist/nice version
+./dist/nice ask "Hello"
+```
+
+### 6. Lint & format
+
+```bash
+uv run ruff check .          # check for errors
+uv run ruff check --fix .    # auto-fix
+uv run ruff format .         # format all files
+```
+
+### 7. Config after install
+
+Set your API key before first use:
+
+```bash
+nice config set api_key YOUR_API_KEY
+nice config set model   openai/gpt-4o   # optional, change model
+nice config list                         # verify settings
 ```
 
 ## Configuration
